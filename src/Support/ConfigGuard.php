@@ -1,0 +1,254 @@
+<?php
+
+declare(strict_types=1);
+
+namespace RoundlyConsulting\Qr\Support;
+
+use RoundlyConsulting\PackageToolkit\Support\Config;
+use RoundlyConsulting\PackageToolkit\Support\ConfigValidator;
+use RoundlyConsulting\Qr\Enums\BySquare\BySquareVersion;
+use RoundlyConsulting\Qr\Enums\EciMode;
+use RoundlyConsulting\Qr\Enums\EpcCharset;
+use RoundlyConsulting\Qr\Enums\EpcVersion;
+use RoundlyConsulting\Qr\Enums\ErrorCorrection;
+use RoundlyConsulting\Qr\Enums\FinderStyle;
+use RoundlyConsulting\Qr\Enums\ModuleStyle;
+use RoundlyConsulting\Qr\Exceptions\InvalidColorException;
+use RoundlyConsulting\Qr\Exceptions\InvalidQrConfigException;
+use RoundlyConsulting\Qr\ValueObjects\Color;
+
+/**
+ * Typed, validated reads of `config/qr.php`. A misconfigured key throws
+ * {@see InvalidQrConfigException} naming the key — never its value.
+ *
+ * @internal
+ */
+final class ConfigGuard
+{
+    public static function errorCorrection(): ErrorCorrection
+    {
+        return ErrorCorrection::fromConfig(config('qr.error_correction'));
+    }
+
+    public static function boostErrorCorrection(): bool
+    {
+        return self::validator()->boolean('qr.boost_error_correction', true);
+    }
+
+    public static function minVersion(): int
+    {
+        $min = self::validator()->intBetween('qr.versions.min', 1, 40, 1);
+
+        if ($min > self::validator()->intBetween('qr.versions.max', 1, 40, 40)) {
+            throw InvalidQrConfigException::invalid('qr.versions.min', 'must not exceed qr.versions.max');
+        }
+
+        return $min;
+    }
+
+    public static function maxVersion(): int
+    {
+        return self::validator()->intBetween('qr.versions.max', self::minVersion(), 40, 40);
+    }
+
+    public static function mask(): ?int
+    {
+        return self::nullableIntBetween('qr.mask', 0, 7);
+    }
+
+    public static function eci(): EciMode
+    {
+        return self::validator()->enum('qr.eci', EciMode::class);
+    }
+
+    public static function kanji(): bool
+    {
+        return self::validator()->boolean('qr.kanji', false);
+    }
+
+    public static function svgSize(): ?int
+    {
+        return self::nullableIntBetween('qr.svg.size', 1, 8192);
+    }
+
+    public static function svgMargin(): int
+    {
+        return self::validator()->intBetween('qr.svg.margin', 0, 64, 4);
+    }
+
+    public static function svgForeground(): Color
+    {
+        return self::color('qr.svg.foreground', config('qr.svg.foreground', '#000000'));
+    }
+
+    public static function svgBackground(): Color
+    {
+        return self::color('qr.svg.background', config('qr.svg.background', '#ffffff'));
+    }
+
+    public static function moduleStyle(): ModuleStyle
+    {
+        return self::validator()->enum('qr.svg.module_style', ModuleStyle::class);
+    }
+
+    public static function moduleRadius(): float
+    {
+        $radius = config('qr.svg.module_radius', 0.5);
+
+        if (is_string($radius) && is_numeric($radius)) {
+            $radius = (float) $radius;
+        }
+
+        if ((! is_int($radius) && ! is_float($radius)) || $radius <= 0 || $radius > 0.5) {
+            throw InvalidQrConfigException::invalid('qr.svg.module_radius', 'expected a number with 0 < radius <= 0.5');
+        }
+
+        return (float) $radius;
+    }
+
+    public static function finderStyle(): FinderStyle
+    {
+        return self::validator()->enum('qr.svg.finder_style', FinderStyle::class);
+    }
+
+    public static function finderColor(): ?Color
+    {
+        $value = config('qr.svg.finder_color');
+
+        return $value === null ? null : self::color('qr.svg.finder_color', $value);
+    }
+
+    public static function xmlDeclaration(): bool
+    {
+        return self::validator()->boolean('qr.svg.xml_declaration', false);
+    }
+
+    public static function responseMaxAge(): int
+    {
+        return self::validator()->intBetween('qr.response.max_age', 0, 31536000, 86400);
+    }
+
+    public static function responseImmutable(): bool
+    {
+        return self::validator()->boolean('qr.response.immutable', false);
+    }
+
+    public static function memoEntries(): int
+    {
+        return self::validator()->intBetween('qr.memo.entries', 0, 100000, 64);
+    }
+
+    public static function cacheEnabled(): bool
+    {
+        return self::validator()->boolean('qr.cache.enabled', false);
+    }
+
+    public static function cacheStore(): ?string
+    {
+        $store = config('qr.cache.store');
+
+        if ($store === null) {
+            return null;
+        }
+
+        if (! is_string($store) || trim($store) === '') {
+            throw InvalidQrConfigException::invalid('qr.cache.store', 'expected null or a non-empty store name');
+        }
+
+        return $store;
+    }
+
+    public static function cacheTtl(): int
+    {
+        return self::validator()->intBetween('qr.cache.ttl', 1, 31536000, 86400);
+    }
+
+    public static function cachePrefix(): string
+    {
+        return self::validator()->requireString('qr.cache.prefix');
+    }
+
+    public static function bladeComponent(): ?string
+    {
+        $component = config('qr.blade.component');
+
+        if ($component === null || $component === '') {
+            return null;
+        }
+
+        if (! is_string($component) || preg_match('/^[a-z0-9][a-z0-9:.\-]*$/i', $component) !== 1) {
+            throw InvalidQrConfigException::invalid('qr.blade.component', 'expected null or a component alias such as "qr-code"');
+        }
+
+        return $component;
+    }
+
+    public static function epcVersion(): EpcVersion
+    {
+        return self::validator()->enum('qr.payments.epc.version', EpcVersion::class);
+    }
+
+    public static function epcCharset(): EpcCharset
+    {
+        return self::validator()->enum('qr.payments.epc.charset', EpcCharset::class);
+    }
+
+    public static function epcStrictCharset(): bool
+    {
+        return self::validator()->boolean('qr.payments.epc.strict_charset', false);
+    }
+
+    public static function bySquareVersion(): BySquareVersion
+    {
+        $version = config('qr.payments.bysquare.version');
+
+        if ($version instanceof BySquareVersion) {
+            return $version;
+        }
+
+        return (is_string($version) ? BySquareVersion::tryFromSemver($version) : null)
+            ?? throw InvalidQrConfigException::invalid('qr.payments.bysquare.version', 'expected one of 1.0.0, 1.1.0, 1.2.0');
+    }
+
+    public static function bySquareDeburr(): bool
+    {
+        return self::validator()->boolean('qr.payments.bysquare.deburr', true);
+    }
+
+    private static function validator(): ConfigValidator
+    {
+        return Config::using(InvalidQrConfigException::class);
+    }
+
+    private static function nullableIntBetween(string $key, int $min, int $max): ?int
+    {
+        $value = config($key);
+
+        if ($value === null) {
+            return null;
+        }
+
+        if (is_string($value) && preg_match('/^-?\d+$/', $value) === 1) {
+            $value = (int) $value;
+        }
+
+        if (! is_int($value) || $value < $min || $value > $max) {
+            throw InvalidQrConfigException::invalid($key, sprintf('expected null or an integer between %d and %d', $min, $max));
+        }
+
+        return $value;
+    }
+
+    private static function color(string $key, mixed $value): Color
+    {
+        if (! is_string($value)) {
+            throw InvalidQrConfigException::invalid($key, 'expected a colour string');
+        }
+
+        try {
+            return Color::parse($value);
+        } catch (InvalidColorException) {
+            throw InvalidQrConfigException::invalid($key, 'expected an allow-listed colour (hex, rgb()/rgba(), a CSS named colour, transparent or currentColor)');
+        }
+    }
+}
