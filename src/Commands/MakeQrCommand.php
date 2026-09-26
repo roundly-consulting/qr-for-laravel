@@ -32,7 +32,7 @@ final class MakeQrCommand extends Command
 
     public function handle(QrFactory $qr): int
     {
-        $data = (string) $this->argument('data');
+        $data = self::stringValue($this->argument('data'));
 
         if ($data === '-') {
             $stream = method_exists($this->input, 'getStream') ? $this->input->getStream() : null;
@@ -120,6 +120,14 @@ final class MakeQrCommand extends Command
         $this->components->twoColumnDetail('Mask penalties', $info->maskPenalties === [] ? 'forced' : implode(' ', $info->maskPenalties));
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Console argument types differ between Laravel majors; accept whatever arrives.
+     */
+    private static function stringValue(mixed $value): string
+    {
+        return is_string($value) ? $value : '';
     }
 
     private function intOption(string $name): ?int

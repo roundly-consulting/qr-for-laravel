@@ -29,19 +29,22 @@ it('renders payload objects and img tags', function (): void {
 });
 
 it('never compiles generated markup as Blade', function (): void {
-    $views = storage_path('framework/views');
-    $before = glob($views.'/*.php') ?: [];
+    $template = '<x-qr-code :data="$data" :title="$title" />';
+    $hostile = '{{ 7*7 }} @php echo "pwned"; @endphp <script>';
 
-    $html = Blade::render('<x-qr-code data="x" :title="$title" />', ['title' => '{{ 7*7 }} @php echo "pwned"; @endphp <script>']);
-    $html2 = Blade::render('<x-qr-code data="y" :title="$title" />', ['title' => '{{ 7*7 }} @php echo "pwned"; @endphp <script>']);
+    $html = Blade::render($template, ['data' => 'first', 'title' => $hostile]);
 
     expect($html)->toContain('{{ 7*7 }} @php echo &quot;pwned&quot;; @endphp &lt;script&gt;')
         ->and($html)->not->toContain('49')
-        ->and($html)->not->toContain('<script>')
-        ->and($html2)->not->toContain('pwned"');
+        ->and($html)->not->toContain('<script>');
 
-    // Only the two templates above were compiled — no view per generated QR code.
-    expect(count(glob($views.'/*.php') ?: []) - count($before))->toBeLessThanOrEqual(2);
+    // A different code with a different title through the same template compiles nothing new.
+    $views = storage_path('framework/views');
+    $before = count(glob($views.'/*') ?: []);
+
+    Blade::render($template, ['data' => 'second', 'title' => $hostile.' 2']);
+
+    expect(count(glob($views.'/*') ?: []))->toBe($before);
 });
 
 it('returns a deferred Htmlable from render()', function (): void {
