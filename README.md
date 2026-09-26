@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://roundly-consulting.com/open-source">
+    <img src="art/hero.png" alt="QR For Laravel — Roundly open source" width="100%">
+  </a>
+</p>
+
 # QR for Laravel
 
 Native QR codes for Laravel: an ISO/IEC 18004 encoder, one optimised SVG renderer, and typed
