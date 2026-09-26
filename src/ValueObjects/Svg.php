@@ -222,15 +222,17 @@ final class Svg implements Htmlable, Responsable, Stringable
     }
 
     /**
-     * Escape text for an XML text node or attribute. Control characters XML 1.0 forbids
-     * are dropped (they cannot even be written as character references) and invalid UTF-8
-     * is replaced, so the document always stays well-formed.
+     * Escape text for an XML text node or attribute. Characters XML 1.0 forbids — C0
+     * controls other than TAB/LF/CR and the noncharacters U+FFFE/U+FFFF — are dropped (they
+     * cannot even be written as character references) and invalid UTF-8 is replaced, so the
+     * document always stays well-formed.
      */
     public static function escape(string $value): string
     {
         $escaped = htmlspecialchars($value, ENT_QUOTES | ENT_XML1 | ENT_SUBSTITUTE, 'UTF-8');
 
-        return (string) preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', $escaped);
+        // ENT_SUBSTITUTE leaves valid UTF-8, so the /u pattern always applies.
+        return (string) preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x{FFFE}\x{FFFF}]/u', '', $escaped);
     }
 
     private function label(): string

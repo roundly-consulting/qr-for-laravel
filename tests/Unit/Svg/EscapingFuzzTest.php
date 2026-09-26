@@ -6,8 +6,10 @@ use RoundlyConsulting\Qr\DataTransferObjects\SvgOptions;
 use RoundlyConsulting\Qr\Encoder\Encoder;
 use RoundlyConsulting\Qr\Exceptions\InvalidColorException;
 use RoundlyConsulting\Qr\Exceptions\InvalidOptionException;
+use RoundlyConsulting\Qr\Facades\Qr;
 use RoundlyConsulting\Qr\Svg\SvgRenderer;
 use RoundlyConsulting\Qr\ValueObjects\Color;
+use RoundlyConsulting\Qr\ValueObjects\Svg;
 
 it('never emits active content whatever the title, description or attribute values', function (string $hostile): void {
     $svg = (new SvgRenderer)->render((new Encoder)->encode($hostile), new SvgOptions, $hostile, $hostile)
@@ -34,7 +36,16 @@ it('never emits active content whatever the title, description or attribute valu
     '{{ 7*7 }} @php echo 1; @endphp',
     "\x00\x1F invalid \xFF utf-8",
     '<a xlink:href="javascript:alert(1)">x</a>',
+    "noncharacters \u{FFFE}\u{FFFF} end",
 ]);
+
+it('drops the XML 1.0 noncharacters U+FFFE and U+FFFF', function (): void {
+    expect(Svg::escape("a\u{FFFE}b\u{FFFF}c\u{FFFD}"))->toBe("abc\u{FFFD}");
+
+    $svg = Qr::url("https://exa\u{FFFF}mple.com")->svg()->toString();
+
+    expect((new DOMDocument)->loadXML($svg))->toBeTrue();
+});
 
 it('refuses hostile colours before they reach the markup', function (string $colour): void {
     new SvgOptions(foreground: Color::parse($colour));
