@@ -8,6 +8,7 @@ use Closure;
 use RoundlyConsulting\Qr\DataTransferObjects\EncodeOptions;
 use RoundlyConsulting\Qr\Enums\EciMode;
 use RoundlyConsulting\Qr\Enums\ErrorCorrection;
+use RoundlyConsulting\Qr\Enums\Mode;
 use RoundlyConsulting\Qr\Exceptions\DataTooLongException;
 use RoundlyConsulting\Qr\ValueObjects\EncodingInfo;
 use RoundlyConsulting\Qr\ValueObjects\QrMatrix;
@@ -33,21 +34,15 @@ final class Encoder
             throw DataTooLongException::input(strlen($data), self::MAX_INPUT_BYTES);
         }
 
-        $eci = $this->eciFor($data, $options->eci);
         $groups = [];
 
-        $segmentsFor = function (int $version) use ($data, $options, $eci, &$groups): array {
+        $segmentsFor = function (int $version) use ($data, $options, &$groups): array {
             $group = $version <= 9 ? 0 : ($version <= 26 ? 1 : 2);
 
-            if (! isset($groups[$group])) {
-                $segments = Segmenter::segment($data, $options->segmentation, $version, $options->kanji);
-                $groups[$group] = $eci === null ? $segments : [Segment::eci($eci), ...$segments];
-            }
-
-            return $groups[$group];
+            return $groups[$group] ??= $this->segmentsWithEci($data, $options, $version);
         };
 
-        return $this->build($segmentsFor, $options, $eci);
+        return $this->build($segmentsFor, $options);
     }
 
     /**
@@ -59,21 +54,20 @@ final class Encoder
      */
     public function encodeSegments(array $segments, EncodeOptions $options = new EncodeOptions): QrMatrix
     {
-        $eci = null;
-
-        foreach ($segments as $segment) {
-            $eci ??= $segment->eciDesignator;
-        }
-
-        return $this->build(static fn (int $version): array => $segments, $options, $eci);
+        return $this->build(static fn (int $version): array => $segments, $options);
     }
 
     /**
      * @param  Closure(int): list<Segment>  $segmentsFor
      */
-    private function build(Closure $segmentsFor, EncodeOptions $options, ?int $eci): QrMatrix
+    private function build(Closure $segmentsFor, EncodeOptions $options): QrMatrix
     {
         [$version, $segments, $usedBits] = $this->selectVersion($segmentsFor, $options);
+        $eci = null;
+
+        foreach ($segments as $segment) {
+            $eci ??= $segment->eciDesignator;
+        }
 
         $ecc = $options->errorCorrection;
         $boosted = false;
@@ -191,12 +185,59 @@ final class Encoder
         return [(int) $best, $penalties];
     }
 
-    private function eciFor(string $data, EciMode $mode): ?int
+    /**
+     * The segments for one count-field group with the ECI policy applied. `Auto` prefixes
+     * ECI 26 only when a byte segment carries non-ASCII UTF-8. Kanji segments hold Shift JIS
+     * values and decoders disagree on whether an ECI designator re-interprets them, so when a
+     * designator is emitted the input is segmented again without kanji.
+     *
+     * @return list<Segment>
+     */
+    private function segmentsWithEci(string $data, EncodeOptions $options, int $version): array
     {
-        return match ($mode) {
-            EciMode::Always => Segment::ECI_UTF8,
-            EciMode::Never => null,
-            EciMode::Auto => preg_match('/[\x80-\xFF]/', $data) === 1 && mb_check_encoding($data, 'UTF-8') ? Segment::ECI_UTF8 : null,
+        $segments = Segmenter::segment($data, $options->segmentation, $version, $options->kanji);
+
+        $eci = match ($options->eci) {
+            EciMode::Always => true,
+            EciMode::Never => false,
+            EciMode::Auto => mb_check_encoding($data, 'UTF-8') && self::carriesNonAsciiBytes($segments),
         };
+
+        if (! $eci) {
+            return $segments;
+        }
+
+        foreach ($segments as $segment) {
+            if ($segment->mode === Mode::Kanji) {
+                $segments = Segmenter::segment($data, $options->segmentation, $version);
+
+                break;
+            }
+        }
+
+        return [Segment::eci(Segment::ECI_UTF8), ...$segments];
+    }
+
+    /**
+     * Whether a byte segment holds a byte of 0x80 or above (its bit string has a leading 1 in
+     * some octet).
+     *
+     * @param  list<Segment>  $segments
+     */
+    private static function carriesNonAsciiBytes(array $segments): bool
+    {
+        foreach ($segments as $segment) {
+            if ($segment->mode !== Mode::Byte) {
+                continue;
+            }
+
+            for ($i = 0, $length = strlen($segment->bits); $i < $length; $i += 8) {
+                if ($segment->bits[$i] === '1') {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

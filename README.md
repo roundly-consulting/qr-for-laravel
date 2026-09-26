@@ -109,7 +109,7 @@ return [
 | `versions.min` / `versions.max` | `1` / `40` | — | Allowed symbol versions (1–40, min ≤ max). |
 | `mask` | `null` | — | Force a mask 0–7; `null` picks the lowest ISO penalty. |
 | `eci` | `auto` | `QR_ECI` | ECI 26 (UTF-8) designator: `auto` (only for non-ASCII UTF-8), `always`, `never`. |
-| `kanji` | `false` | — | Allow Shift JIS kanji segments in segmentation. |
+| `kanji` | `false` | — | Allow Shift JIS kanji segments in segmentation (never combined with an ECI designator: when one is needed, kanji characters go into UTF-8 byte segments). |
 | `svg.size` | `256` | — | Width/height in px (1–8192); `null` renders a responsive SVG (viewBox only). |
 | `svg.margin` | `4` | — | Quiet zone in modules (0–64). ISO/IEC 18004 asks for 4. |
 | `svg.foreground` / `svg.background` | `#000000` / `#ffffff` | — | Hex, `rgb()`/`rgba()`, CSS named colours, `currentColor`; `transparent` omits the background. |

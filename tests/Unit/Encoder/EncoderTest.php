@@ -144,6 +144,21 @@ it('round-trips kanji segments', function (): void {
         ->and($matrix->info()->segments[0]->bitLength)->toBe(4 + 8 + 26);
 });
 
+it('never combines kanji segments with an ECI designator', function (string $data, EciMode $eci, ?int $designator, array $modes): void {
+    // Kanji segments carry Shift JIS; decoders disagree on whether an ECI 26 designator
+    // re-interprets them, so the two are never mixed.
+    $info = encodeVerified($data, new EncodeOptions(eci: $eci, kanji: true))->info();
+
+    expect($info->eciDesignator)->toBe($designator)
+        ->and(array_map(static fn ($segment): string => $segment->mode->key(), $info->segments))->toBe($modes);
+})->with([
+    'kanji only, auto' => ['日本語テキスト漢字', EciMode::Auto, null, ['kanji']],
+    'kanji and ASCII, auto' => ['点茗 ABC 123', EciMode::Auto, null, ['kanji', 'alphanumeric']],
+    'kanji and non-ASCII bytes, auto' => ['日本é語', EciMode::Auto, 26, ['eci', 'byte']],
+    'kanji, always' => ['点茗', EciMode::Always, 26, ['eci', 'byte']],
+    'kanji, never' => ['点茗', EciMode::Never, null, ['kanji']],
+]);
+
 it('encodes explicit segments and picks up their ECI designator', function (): void {
     $matrix = (new Encoder)->encodeSegments([Segment::eci(26), Segment::bytes('ž')]);
 
