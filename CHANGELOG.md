@@ -18,3 +18,9 @@ All notable changes to `qr-for-laravel` will be documented in this file.
 - Banking primitives: IBAN, BIC, ISO 11649 creditor reference, validation rules, `AsIban` cast.
 - In-process matrix memo and optional rendered-SVG cache for public payloads.
 - `Testing\MatrixDecoder` for host test suites.
+
+Deviations from the implementation plan:
+
+- `Rules\FitsInQrCode` takes `?ErrorCorrection $errorCorrection = null, ?int $maxVersion = null`
+  instead of fixed `Medium` / `40` defaults: unset arguments follow `qr.error_correction`,
+  `qr.versions.max`, `qr.eci` and `qr.kanji`, so the rule never passes input the encoder then rejects.

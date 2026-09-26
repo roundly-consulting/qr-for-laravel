@@ -356,6 +356,10 @@ protected function casts(): array
 }
 ```
 
+`FitsInQrCode` checks with the settings `Qr::text()` encodes with: unset arguments take the
+configured level, maximum version, ECI policy and kanji switch (explicit arguments win), so it never
+passes text the encoder then rejects.
+
 `Iban::fromString()`, `Bic::fromString()` and `CreditorReference::fromString()/generate()` are
 available directly.
 
