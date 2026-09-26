@@ -40,7 +40,7 @@ it('builds every payload through the facade', function (PendingQr $pending, stri
     'phone' => [fn () => Qr::phone('+421 900 111 222'), Phone::class, 'tel:+421900111222'],
     'sms' => [fn () => Qr::sms('0900111222', 'x', SmsFormat::Uri), Sms::class, 'sms:0900111222?body=x'],
     'wifi' => [fn () => Qr::wifi('Guest', null, WifiSecurity::None), Wifi::class, 'WIFI:T:nopass;S:Guest;;'],
-    'vcard' => [fn () => Qr::vcard(new VCard('Jana')), VCard::class, "BEGIN:VCARD\r\nVERSION:3.0\r\nN:Jana;;;;\r\nFN:Jana\r\nEND:VCARD"],
+    'vcard' => [fn () => Qr::vcard(new VCard('Jana')), VCard::class, "BEGIN:VCARD\r\nVERSION:3.0\r\nN:;Jana;;;\r\nFN:Jana\r\nEND:VCARD"],
     'geo' => [fn () => Qr::geo(48.1486, 17.1077), Geo::class, 'geo:48.1486,17.1077'],
     'otpauth string' => [fn () => Qr::otpauth('otpauth://totp/A:b?secret=JBSWY3DP'), Otpauth::class, 'otpauth://totp/A:b?secret=JBSWY3DP'],
     'otpauth payload' => [fn () => Qr::otpauth(Otpauth::totp('JBSWY3DP', 'b', 'A')), Otpauth::class, 'otpauth://totp/A:b?secret=JBSWY3DP&issuer=A&algorithm=SHA1&digits=6&period=30'],

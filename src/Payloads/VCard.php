@@ -14,7 +14,11 @@ use RoundlyConsulting\Qr\Exceptions\InvalidPayloadException;
 /**
  * A vCard 3.0 contact (RFC 2426): CRLF line breaks, `\ , ;` and newlines escaped in text
  * values, the `URL` written as a URI (spaces and controls percent-encoded), no line folding.
- * The whole name goes into the family-name component of `N` and into `FN`.
+ *
+ * `$name` is the display name (`FN`). The structured name (`N`, family;given;additional;
+ * prefixes;suffixes) comes from the optional name parts; with none given the name is never
+ * guessed apart — the whole display name goes into the given-name component (`N:;Jana
+ * Nováková;;;`), which contact apps show unchanged and file under its first letter.
  */
 final readonly class VCard implements Payload
 {
@@ -36,6 +40,11 @@ final readonly class VCard implements Payload
         public ?string $url = null,
         public ?string $address = null,
         public ?string $note = null,
+        public ?string $familyName = null,
+        public ?string $givenName = null,
+        public ?string $additionalNames = null,
+        public ?string $honorificPrefixes = null,
+        public ?string $honorificSuffixes = null,
     ) {
         if (trim($name) === '') {
             throw InvalidPayloadException::required('VCard', 'name');
@@ -43,6 +52,12 @@ final readonly class VCard implements Payload
 
         if (mb_strlen($name) > 255) {
             throw InvalidPayloadException::tooLong('VCard', 'name', 255);
+        }
+
+        foreach ($this->nameParts() as $field => $part) {
+            if (mb_strlen($part) > 255) {
+                throw InvalidPayloadException::tooLong('VCard', $field, 255);
+            }
         }
 
         foreach ($emails as $email) {
@@ -54,8 +69,11 @@ final readonly class VCard implements Payload
 
     public function toQrString(): string
     {
-        $name = self::escape($this->name);
-        $lines = ['BEGIN:VCARD', 'VERSION:3.0', 'N:'.$name.';;;;', 'FN:'.$name];
+        $parts = array_map(self::escape(...), $this->nameParts());
+        $structured = array_filter($parts, static fn (string $part): bool => $part !== '') === []
+            ? ';'.self::escape($this->name).';;;'
+            : implode(';', $parts);
+        $lines = ['BEGIN:VCARD', 'VERSION:3.0', 'N:'.$structured, 'FN:'.self::escape($this->name)];
 
         foreach (['ORG' => $this->organization, 'TITLE' => $this->title] as $property => $value) {
             if ($value !== null && $value !== '') {
@@ -101,6 +119,22 @@ final readonly class VCard implements Payload
     public function description(Translator $translator): string
     {
         return (string) $translator->get('qr::qr.descriptions.vcard');
+    }
+
+    /**
+     * The `N` components in order, trimmed ('' when unset).
+     *
+     * @return array{familyName: string, givenName: string, additionalNames: string, honorificPrefixes: string, honorificSuffixes: string}
+     */
+    private function nameParts(): array
+    {
+        return [
+            'familyName' => trim((string) $this->familyName),
+            'givenName' => trim((string) $this->givenName),
+            'additionalNames' => trim((string) $this->additionalNames),
+            'honorificPrefixes' => trim((string) $this->honorificPrefixes),
+            'honorificSuffixes' => trim((string) $this->honorificSuffixes),
+        ];
     }
 
     /**

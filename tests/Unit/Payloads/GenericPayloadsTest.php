@@ -206,7 +206,7 @@ it('builds vCard 3.0 contacts', function (): void {
     expect($card->toQrString())->toBe(implode("\r\n", [
         'BEGIN:VCARD',
         'VERSION:3.0',
-        'N:Ján Kováč\; MVDr.;;;;',
+        'N:;Ján Kováč\; MVDr.;;;',
         'FN:Ján Kováč\; MVDr.',
         'ORG:VetClinic\, s.r.o.',
         'TITLE:Veterinár',
@@ -220,8 +220,48 @@ it('builds vCard 3.0 contacts', function (): void {
         ->and($card->requirements()->segmentation)->toBe(Segmentation::Byte)
         ->and($card->sensitivity())->toBe(Sensitivity::Personal)
         ->and($card->description(translator()))->toBe('QR code with contact details')
-        ->and((new VCard('Jana'))->toQrString())->toBe("BEGIN:VCARD\r\nVERSION:3.0\r\nN:Jana;;;;\r\nFN:Jana\r\nEND:VCARD");
+        ->and((new VCard('Jana'))->toQrString())->toBe("BEGIN:VCARD\r\nVERSION:3.0\r\nN:;Jana;;;\r\nFN:Jana\r\nEND:VCARD");
 });
+
+it('writes structured name parts into N and keeps FN as the display name', function (): void {
+    $card = new VCard(
+        name: 'MVDr. Jana Mária Nováková, PhD.',
+        familyName: 'Nováková',
+        givenName: 'Jana',
+        additionalNames: 'Mária',
+        honorificPrefixes: 'MVDr.',
+        honorificSuffixes: 'PhD.',
+    );
+
+    expect(explode("\r\n", $card->toQrString()))->toContain('N:Nováková;Jana;Mária;MVDr.;PhD.')
+        ->toContain('FN:MVDr. Jana Mária Nováková\, PhD.')
+        ->and(explode("\r\n", (new VCard('Nováková, Jana', familyName: 'Nováková', givenName: 'Jana'))->toQrString()))
+        ->toContain('N:Nováková;Jana;;;')
+        ->and(explode("\r\n", (new VCard('A; B', familyName: "Van; der\nBerg", givenName: 'Ann,Marie'))->toQrString()))
+        ->toContain('N:Van\; der\nBerg;Ann\,Marie;;;');
+});
+
+it('puts a single-string name into the given-name slot of N', function (): void {
+    // No silent splitting: FN carries the full display name, N holds it as the given name.
+    expect(explode("\r\n", (new VCard('Jana Nováková'))->toQrString()))
+        ->toContain('N:;Jana Nováková;;;')
+        ->toContain('FN:Jana Nováková');
+});
+
+it('validates structured name parts', function (Closure $build, string $field): void {
+    try {
+        $build();
+    } catch (InvalidPayloadException $e) {
+        expect($e->field)->toBe($field)->and($e->reason)->toBe('too_long');
+
+        return;
+    }
+
+    $this->fail('expected a failure');
+})->with([
+    [fn () => new VCard('Jana', familyName: str_repeat('a', 256)), 'familyName'],
+    [fn () => new VCard('Jana', honorificSuffixes: str_repeat('a', 256)), 'honorificSuffixes'],
+]);
 
 it('writes the vCard URL as a URI value, not escaped text (RFC 2426 §3.6.8)', function (string $url, string $line): void {
     $lines = explode("\r\n", (new VCard('Jana', url: $url))->toQrString());

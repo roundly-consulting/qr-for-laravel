@@ -24,3 +24,7 @@ Deviations from the implementation plan:
 - `Rules\FitsInQrCode` takes `?ErrorCorrection $errorCorrection = null, ?int $maxVersion = null`
   instead of fixed `Medium` / `40` defaults: unset arguments follow `qr.error_correction`,
   `qr.versions.max`, `qr.eci` and `qr.kanji`, so the rule never passes input the encoder then rejects.
+- `Payloads\VCard` gained the structured name parts (`familyName`, `givenName`, `additionalNames`,
+  `honorificPrefixes`, `honorificSuffixes`) written to `N`; `name` stays the display name (`FN`). A
+  name given only as one string now goes into the given-name component (`N:;Jana Nováková;;;`)
+  instead of the family-name component the plan specified, and is never split heuristically.

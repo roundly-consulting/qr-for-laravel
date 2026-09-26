@@ -208,7 +208,10 @@ Qr::sms('+421900123456', 'See you at 10', SmsFormat::Smsto);
 Qr::wifi('Clinic Guest', 'guest-password', WifiSecurity::Wpa);   // WPA, WEP, SAE (WPA3), None
 Qr::make(Wifi::withHexKey('Clinic', $psk));             // raw hex key: 64-digit WPA PSK or 10/26/58-digit WEP key, unquoted
 Qr::vcard(new VCard(
-    name: 'Jana Nováková',
+    name: 'MVDr. Jana Nováková',                         // display name (FN)
+    familyName: 'Nováková',                              // structured name (N) — how phones file the contact
+    givenName: 'Jana',
+    honorificPrefixes: 'MVDr.',
     organization: 'VetClinic s.r.o.',
     phones: ['+421 900 123 456'],
     emails: ['jana@example.sk'],
@@ -217,6 +220,12 @@ Qr::vcard(new VCard(
 Qr::geo(48.1486, 17.1077);                              // geo:48.1486,17.1077
 Qr::make($anyPayload);                                  // your own Contracts\Payload implementation
 ```
+
+A vCard's `name` is the display name (`FN`). Pass the parts (`familyName`, `givenName`,
+`additionalNames`, `honorificPrefixes`, `honorificSuffixes`) so contact apps file the card under the
+right name (`N:Nováková;Jana;;MVDr.;`). With only `name`, the package never guesses a split: the
+whole name becomes the given name (`N:;Jana Nováková;;;`), which apps display unchanged and sort under
+its first letter.
 
 Invalid input throws an `InvalidPayloadException` carrying `$field` and a `$reason` key — the
 message never contains the value.
