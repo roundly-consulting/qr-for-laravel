@@ -94,6 +94,35 @@ it('decodes strings from an independent encoder', function (string $name): void 
         ->and(PayBySquare::decode($document->encode())->serialize())->toBe($vector['serialized']);
 })->with(fn (): array => array_keys(require __DIR__.'/../../../Fixtures/bysquare/wire-vectors.php'));
 
+it('decodes 1.0.0 strings that carry the beneficiary block', function (string $code, BySquareVersion $version, ?string $name, string $serialized): void {
+    // An independent encoder writes the (1.1.0) beneficiary block for every version,
+    // 1.0.0 included; such codes are in circulation and must still decode.
+    $document = PayBySquare::decode($code);
+
+    expect(BySquareCodec::decode($code)->version)->toBe(BySquareVersion::V1_0_0)
+        ->and($document->version)->toBe($version)
+        ->and($document->payments[0]->beneficiary?->name)->toBe($name)
+        ->and($document->payments[0]->variableSymbol)->toBe('123')
+        ->and($document->serialize())->toBe($serialized);
+})->with([
+    'empty block' => [
+        '0003M0004IF4SJM09C97P9SG2S5I1KTBQDO503HBOG9V53NAS8149G30KTHEIUNTP8JL6O3URDRGV0SR8TG578047VVPSH0000',
+        BySquareVersion::V1_0_0,
+        null,
+        "\t1\t1\t25\tEUR\t\t123\t\t\t\t\t1\tSK9611000000002918599669\t\t0\t0",
+    ],
+    'beneficiary in the block' => [
+        '0005A0006IHCD053NTRQ95GN6HB1UHBK3300MBHBNOB3DJ31FLL1C7RJ7SFTD0R6QVBQOTHDI7ND6TM66C3DJUBEKQUSGC20PN1F470F74LL22UIK66MH52645IVO90CVV2QQK00',
+        BySquareVersion::V1_1_0,
+        'Jana Novakova',
+        "qr-0005\t1\t1\t25\tEUR\t\t123\t\t\t\t\t1\tSK9611000000002918599669\t\t0\t0\tJana Novakova\t\tKosice",
+    ],
+]);
+
+it('still rejects a 1.0.0 frame with a partial trailing block', function (): void {
+    PayBySquare::decode(BySquareCodec::encode("\t1\t1\t25\tEUR\t\t123\t\t\t\t\t1\tSK9611000000002918599669\t\t0\t0\tJana", BySquareVersion::V1_0_0));
+})->throws(BySquareDecodeException::class);
+
 it('restores the full model from a decoded string', function (): void {
     $vectors = require __DIR__.'/../../../Fixtures/bysquare/wire-vectors.php';
 

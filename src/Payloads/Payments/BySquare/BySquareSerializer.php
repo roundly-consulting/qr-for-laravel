@@ -140,7 +140,11 @@ final class BySquareSerializer
 
             $beneficiaries = [];
 
-            if ($version->hasBeneficiaryBlock()) {
+            // 1.0.0 predates the beneficiary block, but encoders in circulation write it for
+            // every version: accept it when exactly one name/street/city triple per payment
+            // follows. A 1.0.0 code that actually names a beneficiary decodes as 1.1.0, the
+            // first version able to carry it.
+            if ($version->hasBeneficiaryBlock() || count($fields) - $cursor === 3 * $count) {
                 for ($i = 0; $i < $count; $i++) {
                     [$name, $street, $city] = [$next(), $next(), $next()];
                     $beneficiaries[$i] = $name === '' ? null : new Beneficiary($name, self::nullable($street), self::nullable($city));
@@ -159,6 +163,10 @@ final class BySquareSerializer
 
             if ($payments === []) {
                 throw BySquareDecodeException::fields();
+            }
+
+            if (! $version->hasBeneficiaryBlock() && array_filter($beneficiaries) !== []) {
+                $version = BySquareVersion::V1_1_0;
             }
 
             return new PayBySquare($payments, $invoiceId, $version, false);
