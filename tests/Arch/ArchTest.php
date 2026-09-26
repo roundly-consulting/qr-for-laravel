@@ -21,6 +21,22 @@ ArchPresets::finalByDefault('RoundlyConsulting\Qr', ignoring: [
 ]);
 
 /**
+ * The money seam: only Support\Amounts calls money-for-laravel; payment payloads may
+ * type-hint Money but nothing else imports it.
+ */
+arch('only the amounts seam and payment payloads touch money')
+    ->expect('RoundlyConsulting\Qr')
+    ->not->toUse('RoundlyConsulting\Money')
+    ->ignoring([
+        'RoundlyConsulting\Qr\Support\Amounts',
+        'RoundlyConsulting\Qr\Payloads\Payments',
+    ]);
+
+arch('payment payloads only type-hint the Money value object')
+    ->expect('RoundlyConsulting\Qr\Payloads\Payments')
+    ->not->toUse(['RoundlyConsulting\Money\Currency', 'RoundlyConsulting\Money\Contracts', 'RoundlyConsulting\Money\Facades']);
+
+/**
  * base64 and hashing go through crypto-for-laravel (`Codec\Base64`, `Hash\Digest`).
  * `crc32()` is a checksum, not a crypto primitive, and is not on the list.
  */
@@ -57,8 +73,8 @@ arch('the package base exception is abstract')
     ->toBeAbstract()
     ->toExtend(RuntimeException::class);
 
-arch('the encoder core is framework-free')
-    ->expect('RoundlyConsulting\Qr\Encoder')
+arch('the encoder and banking cores are framework-free')
+    ->expect(['RoundlyConsulting\Qr\Encoder', 'RoundlyConsulting\Qr\Banking'])
     ->not->toUse('Illuminate');
 
 arch('encoder internals stay behind the public encoder surface')
@@ -71,8 +87,10 @@ arch('src only uses allowed vendor roots')
         'RoundlyConsulting\Qr',
         'RoundlyConsulting\Crypto',
         'RoundlyConsulting\Enums',
+        'RoundlyConsulting\Money',
         'RoundlyConsulting\PackageToolkit',
         'Illuminate',
+        'Normalizer',
         'Closure',
         'SensitiveParameter',
         'RuntimeException',

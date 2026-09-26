@@ -19,6 +19,7 @@ use RoundlyConsulting\Qr\QrManager;
  * @method static \RoundlyConsulting\Qr\PendingQr vcard(\RoundlyConsulting\Qr\Payloads\VCard $card)
  * @method static \RoundlyConsulting\Qr\PendingQr geo(float $latitude, float $longitude)
  * @method static \RoundlyConsulting\Qr\PendingQr otpauth(string|\RoundlyConsulting\Qr\Payloads\Otpauth $uriOrPayload)
+ * @method static \RoundlyConsulting\Qr\PendingQr epc(\RoundlyConsulting\Qr\Payloads\Payments\Epc\EpcPayment $payment)
  * @method static \RoundlyConsulting\Qr\ValueObjects\Svg svg(string|\RoundlyConsulting\Qr\Contracts\Payload $data, ?\RoundlyConsulting\Qr\DataTransferObjects\QrOptions $options = null)
  * @method static \RoundlyConsulting\Qr\ValueObjects\QrMatrix matrix(string|\RoundlyConsulting\Qr\Contracts\Payload $data, ?\RoundlyConsulting\Qr\DataTransferObjects\QrOptions $options = null)
  *

@@ -5,18 +5,17 @@ declare(strict_types=1);
 namespace RoundlyConsulting\Qr\Tests;
 
 use Illuminate\Support\ServiceProvider;
-use RoundlyConsulting\Money\MoneyServiceProvider;
 use RoundlyConsulting\Qr\QrServiceProvider;
 use RoundlyConsulting\Testing\PackageTestCase;
 
-abstract class TestCase extends PackageTestCase
+/**
+ * Registers the qr provider alone — proves the boot contract (no money at boot).
+ */
+abstract class QrOnlyTestCase extends PackageTestCase
 {
     /** @return list<class-string<ServiceProvider>> */
     protected function packageProviders(): array
     {
-        return [MoneyServiceProvider::class, QrServiceProvider::class];
+        return [QrServiceProvider::class];
     }
-
-    // No migrationSources() override: the package ships no migrations and never opens a
-    // database connection.
 }

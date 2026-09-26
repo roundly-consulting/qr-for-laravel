@@ -19,12 +19,14 @@ use RoundlyConsulting\Qr\Enums\WifiSecurity;
 use RoundlyConsulting\Qr\Payloads\Email;
 use RoundlyConsulting\Qr\Payloads\Geo;
 use RoundlyConsulting\Qr\Payloads\Otpauth;
+use RoundlyConsulting\Qr\Payloads\Payments\Epc\EpcPayment;
 use RoundlyConsulting\Qr\Payloads\Phone;
 use RoundlyConsulting\Qr\Payloads\Sms;
 use RoundlyConsulting\Qr\Payloads\Text;
 use RoundlyConsulting\Qr\Payloads\Url;
 use RoundlyConsulting\Qr\Payloads\VCard;
 use RoundlyConsulting\Qr\Payloads\Wifi;
+use RoundlyConsulting\Qr\Support\ConfigGuard;
 use RoundlyConsulting\Qr\Support\MatrixMemo;
 use RoundlyConsulting\Qr\Support\SvgCache;
 use RoundlyConsulting\Qr\Svg\SvgRenderer;
@@ -94,6 +96,11 @@ final readonly class QrManager implements QrFactory
     public function otpauth(#[SensitiveParameter] string|Otpauth $uriOrPayload): PendingQr
     {
         return $this->make(is_string($uriOrPayload) ? Otpauth::fromUri($uriOrPayload) : $uriOrPayload);
+    }
+
+    public function epc(EpcPayment $payment): PendingQr
+    {
+        return $this->make($payment->withDefaults(ConfigGuard::epcVersion(), ConfigGuard::epcCharset(), ConfigGuard::epcStrictCharset()));
     }
 
     public function svg(string|Payload $data, ?QrOptions $options = null): Svg
