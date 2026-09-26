@@ -21,7 +21,7 @@ use RoundlyConsulting\Qr\ValueObjects\Svg;
 final readonly class SvgCache
 {
     /** Bump when the rendered output or the stored format changes. */
-    public const string FORMAT_VERSION = 'qr-svg-1';
+    public const string FORMAT_VERSION = 'qr-svg-2';
 
     public function __construct(private CacheFactory $cache) {}
 

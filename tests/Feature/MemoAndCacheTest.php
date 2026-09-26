@@ -64,6 +64,18 @@ it('caches rendered SVG for public payloads when enabled', function (): void {
         ->and(cacheEntries())->toHaveCount(1);
 });
 
+it('keeps the XML declaration on a cache hit', function (bool $viaConfig): void {
+    config(['qr.cache.enabled' => true, 'qr.cache.store' => 'array', 'qr.svg.xml_declaration' => $viaConfig]);
+    $pending = $viaConfig ? Qr::text('declared') : Qr::text('declared')->xmlDeclaration();
+
+    $miss = $pending->svg()->toString();
+    $hit = $pending->svg()->toString();
+
+    expect($miss)->toStartWith(Svg::XML_DECLARATION)
+        ->and($hit)->toBe($miss)
+        ->and(cacheEntries())->toHaveCount(1);
+})->with(['config' => [true], 'builder' => [false]]);
+
 it('never writes secret or personal payloads to the cache store', function (): void {
     config(['qr.cache.enabled' => true]);
 
@@ -106,6 +118,7 @@ it('re-renders an unreadable cache entry', function (string $payload): void {
     'wrong shape' => ['{"attributes":[],"content":"x"}'],
     'bad attribute' => ['{"attributes":{"a":1},"content":"x","width":null,"viewBox":1}'],
     'bad width' => ['{"attributes":{},"content":"x","width":"1","viewBox":1}'],
+    'no declaration flag' => ['{"attributes":{},"content":"x","width":null,"viewBox":1}'],
 ]);
 
 it('restores a cached SVG with a lazily re-encoded matrix', function (): void {
@@ -114,7 +127,7 @@ it('restores a cached SVG with a lazily re-encoded matrix', function (): void {
     expect($restored)->not->toBeNull()
         ->and($restored?->matrix()->rows())->toBe(Qr::text('lazy')->matrix()->rows())
         ->and($restored?->sensitivity())->toBe(Sensitivity::Public)
-        ->and(SvgCache::FORMAT_VERSION)->toBe('qr-svg-1');
+        ->and(SvgCache::FORMAT_VERSION)->toBe('qr-svg-2');
 });
 
 /**

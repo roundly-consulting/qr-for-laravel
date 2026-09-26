@@ -186,6 +186,7 @@ final class Svg implements Htmlable, Responsable, Stringable
             'content' => $this->content,
             'width' => $this->width,
             'viewBox' => $this->viewBoxSize,
+            'xmlDeclaration' => $this->xmlDeclaration,
         ], JSON_THROW_ON_ERROR);
     }
 
@@ -202,7 +203,8 @@ final class Svg implements Htmlable, Responsable, Stringable
         $data = json_decode($payload, true);
 
         if (! is_array($data) || ! is_array($data['attributes'] ?? null) || ! is_string($data['content'] ?? null)
-            || ! is_int($data['viewBox'] ?? null) || ! array_key_exists('width', $data) || ! (is_int($data['width']) || $data['width'] === null)) {
+            || ! is_int($data['viewBox'] ?? null) || ! array_key_exists('width', $data) || ! (is_int($data['width']) || $data['width'] === null)
+            || ! is_bool($data['xmlDeclaration'] ?? null)) {
             return null;
         }
 
@@ -216,7 +218,7 @@ final class Svg implements Htmlable, Responsable, Stringable
             $attributes[$name] = $value;
         }
 
-        return new self($attributes, $data['content'], $matrix, Sensitivity::Public, $data['width'], $data['viewBox']);
+        return new self($attributes, $data['content'], $matrix, Sensitivity::Public, $data['width'], $data['viewBox'], $data['xmlDeclaration']);
     }
 
     /**
