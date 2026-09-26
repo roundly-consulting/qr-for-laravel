@@ -195,7 +195,7 @@ $matrix = Qr::matrix('hello', new QrOptions(mask: 2));
 
 ```php
 use RoundlyConsulting\Qr\Enums\{SmsFormat, WifiSecurity};
-use RoundlyConsulting\Qr\Payloads\{Geo, Otpauth, VCard};
+use RoundlyConsulting\Qr\Payloads\{Geo, Otpauth, VCard, Wifi};
 
 Qr::text('Any text');
 Qr::url('https://example.com');                        // http/https only by default
@@ -204,6 +204,7 @@ Qr::email('team@example.com', 'Hello', 'Body text');    // mailto:
 Qr::phone('+421 900 123 456');                          // tel:+421900123456
 Qr::sms('+421900123456', 'See you at 10', SmsFormat::Smsto);
 Qr::wifi('Clinic Guest', 'guest-password', WifiSecurity::Wpa);   // WPA, WEP, SAE (WPA3), None
+Qr::make(Wifi::withHexKey('Clinic', $psk));             // raw hex key: 64-digit WPA PSK or 10/26/58-digit WEP key, unquoted
 Qr::vcard(new VCard(
     name: 'Jana Nováková',
     organization: 'VetClinic s.r.o.',

@@ -143,6 +143,35 @@ it('builds escaped Wi-Fi codes', function (Wifi $wifi, string $expected): void {
     'open' => [fn () => new Wifi('Guest', null, WifiSecurity::None), 'WIFI:T:nopass;S:Guest;;'],
 ]);
 
+it('writes an opted-in raw hex key unquoted', function (Wifi $wifi, string $expected): void {
+    expect($wifi->toQrString())->toBe($expected)
+        ->and($wifi->hexKey)->toBeTrue()
+        ->and($wifi->sensitivity())->toBe(Sensitivity::Secret);
+})->with([
+    'wpa psk' => [fn () => Wifi::withHexKey('Clinic', str_repeat('a1', 32)), 'WIFI:T:WPA;S:Clinic;P:'.str_repeat('a1', 32).';;'],
+    'wep 64-bit' => [fn () => Wifi::withHexKey('Old', '0123456789', WifiSecurity::Wep), 'WIFI:T:WEP;S:Old;P:0123456789;;'],
+    'wep 128-bit hidden' => [fn () => Wifi::withHexKey('Old', str_repeat('AB', 13), WifiSecurity::Wep, true), 'WIFI:T:WEP;S:Old;P:'.str_repeat('AB', 13).';H:true;;'],
+    'wep 256-bit' => [fn () => Wifi::withHexKey('Old', str_repeat('c', 58), WifiSecurity::Wep), 'WIFI:T:WEP;S:Old;P:'.str_repeat('c', 58).';;'],
+]);
+
+it('rejects raw hex keys of the wrong shape', function (Closure $build, string $reason): void {
+    try {
+        $build();
+    } catch (InvalidPayloadException $e) {
+        expect($e->reason)->toBe($reason)->and($e->field)->toBe($reason === 'mutually_exclusive' ? 'hexKey' : 'password');
+
+        return;
+    }
+
+    $this->fail('expected a failure');
+})->with([
+    'wpa 63 hex' => [fn () => Wifi::withHexKey('Net', str_repeat('a', 63)), 'invalid_format'],
+    'wpa not hex' => [fn () => Wifi::withHexKey('Net', str_repeat('g', 64)), 'invalid_format'],
+    'wep 12 hex' => [fn () => Wifi::withHexKey('Net', str_repeat('a', 12), WifiSecurity::Wep), 'invalid_format'],
+    'sae' => [fn () => Wifi::withHexKey('Net', str_repeat('a', 64), WifiSecurity::Sae), 'mutually_exclusive'],
+    'open' => [fn () => Wifi::withHexKey('Net', str_repeat('a', 64), WifiSecurity::None), 'mutually_exclusive'],
+]);
+
 it('validates Wi-Fi credentials', function (Closure $build, string $reason): void {
     try {
         $build();
