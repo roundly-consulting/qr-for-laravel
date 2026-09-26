@@ -20,14 +20,10 @@ final class ShiftJis
     public static function kanjiValue(string $character): ?int
     {
         $sjis = mb_convert_encoding($character, 'SJIS', 'UTF-8');
+        $code = strlen($sjis) === 2 ? (ord($sjis[0]) << 8) | ord($sjis[1]) : 0;
 
-        if (strlen($sjis) !== 2 || mb_convert_encoding($sjis, 'UTF-8', 'SJIS') !== $character) {
-            return null;
-        }
-
-        $code = (ord($sjis[0]) << 8) | ord($sjis[1]);
-
-        if ($code < 0x8140 || $code > 0xEBBF || ($code > 0x9FFC && $code < 0xE040)) {
+        // Only double-byte values in the two kanji-mode ranges that convert back unchanged.
+        if (($code < 0x8140 || $code > 0xEBBF || ($code > 0x9FFC && $code < 0xE040)) || mb_convert_encoding($sjis, 'UTF-8', 'SJIS') !== $character) {
             return null;
         }
 
