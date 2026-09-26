@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use RoundlyConsulting\Qr\Exceptions\BySquareDecodeException;
 use RoundlyConsulting\Qr\Exceptions\InvalidOptionException;
 use RoundlyConsulting\Qr\Exceptions\InvalidPayloadException;
 use RoundlyConsulting\Qr\Exceptions\QrException;
@@ -18,6 +19,7 @@ ArchPresets::strictTypes('RoundlyConsulting\Qr');
 ArchPresets::finalByDefault('RoundlyConsulting\Qr', ignoring: [
     InvalidOptionException::class,
     InvalidPayloadException::class,
+    BySquareDecodeException::class,     // parent of CorruptLzmaStreamException
 ]);
 
 /**
@@ -74,7 +76,7 @@ arch('the package base exception is abstract')
     ->toExtend(RuntimeException::class);
 
 arch('the encoder and banking cores are framework-free')
-    ->expect(['RoundlyConsulting\Qr\Encoder', 'RoundlyConsulting\Qr\Banking'])
+    ->expect(['RoundlyConsulting\Qr\Encoder', 'RoundlyConsulting\Qr\Banking', 'RoundlyConsulting\Qr\Compression'])
     ->not->toUse('Illuminate');
 
 arch('encoder internals stay behind the public encoder surface')
@@ -90,6 +92,7 @@ arch('src only uses allowed vendor roots')
         'RoundlyConsulting\Money',
         'RoundlyConsulting\PackageToolkit',
         'Illuminate',
+        'Carbon',
         'Normalizer',
         'Closure',
         'SensitiveParameter',

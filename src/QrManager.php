@@ -19,6 +19,7 @@ use RoundlyConsulting\Qr\Enums\WifiSecurity;
 use RoundlyConsulting\Qr\Payloads\Email;
 use RoundlyConsulting\Qr\Payloads\Geo;
 use RoundlyConsulting\Qr\Payloads\Otpauth;
+use RoundlyConsulting\Qr\Payloads\Payments\BySquare\PayBySquare;
 use RoundlyConsulting\Qr\Payloads\Payments\Epc\EpcPayment;
 use RoundlyConsulting\Qr\Payloads\Phone;
 use RoundlyConsulting\Qr\Payloads\Sms;
@@ -101,6 +102,11 @@ final readonly class QrManager implements QrFactory
     public function epc(EpcPayment $payment): PendingQr
     {
         return $this->make($payment->withDefaults(ConfigGuard::epcVersion(), ConfigGuard::epcCharset(), ConfigGuard::epcStrictCharset()));
+    }
+
+    public function payBySquare(PayBySquare $document): PendingQr
+    {
+        return $this->make($document->withDefaults(ConfigGuard::bySquareVersion(), ConfigGuard::bySquareDeburr()));
     }
 
     public function svg(string|Payload $data, ?QrOptions $options = null): Svg

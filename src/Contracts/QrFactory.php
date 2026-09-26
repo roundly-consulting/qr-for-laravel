@@ -8,6 +8,7 @@ use RoundlyConsulting\Qr\DataTransferObjects\QrOptions;
 use RoundlyConsulting\Qr\Enums\SmsFormat;
 use RoundlyConsulting\Qr\Enums\WifiSecurity;
 use RoundlyConsulting\Qr\Payloads\Otpauth;
+use RoundlyConsulting\Qr\Payloads\Payments\BySquare\PayBySquare;
 use RoundlyConsulting\Qr\Payloads\Payments\Epc\EpcPayment;
 use RoundlyConsulting\Qr\Payloads\Text;
 use RoundlyConsulting\Qr\Payloads\VCard;
@@ -49,6 +50,11 @@ interface QrFactory
      * A SEPA credit transfer code; unset version/charset fields take the configured defaults.
      */
     public function epc(EpcPayment $payment): PendingQr;
+
+    /**
+     * A PAY by square code; unset version/deburr fields take the configured defaults.
+     */
+    public function payBySquare(PayBySquare $document): PendingQr;
 
     public function svg(string|Payload $data, ?QrOptions $options = null): Svg;
 

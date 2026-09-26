@@ -1,0 +1,66 @@
+[
+    {
+        "case": "empty",
+        "length": 0,
+        "lc": 3,
+        "lp": 0,
+        "pb": 2,
+        "dictionary": 131072
+    },
+    {
+        "case": "single-byte",
+        "length": 1,
+        "lc": 3,
+        "lp": 0,
+        "pb": 2,
+        "dictionary": 131072
+    },
+    {
+        "case": "pseudo-random",
+        "length": 2048,
+        "lc": 3,
+        "lp": 0,
+        "pb": 2,
+        "dictionary": 131072
+    },
+    {
+        "case": "repetitive",
+        "length": 4800,
+        "lc": 3,
+        "lp": 0,
+        "pb": 2,
+        "dictionary": 131072
+    },
+    {
+        "case": "long-match",
+        "length": 2414,
+        "lc": 3,
+        "lp": 0,
+        "pb": 2,
+        "dictionary": 131072
+    },
+    {
+        "case": "far-distance",
+        "length": 8800,
+        "lc": 3,
+        "lp": 0,
+        "pb": 2,
+        "dictionary": 131072
+    },
+    {
+        "case": "rep-distances",
+        "length": 7800,
+        "lc": 3,
+        "lp": 0,
+        "pb": 2,
+        "dictionary": 131072
+    },
+    {
+        "case": "bysquare-payload",
+        "length": 138,
+        "lc": 3,
+        "lp": 0,
+        "pb": 2,
+        "dictionary": 131072
+    }
+]

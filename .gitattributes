@@ -11,3 +11,7 @@
 /pint.json          export-ignore
 /phpstan.neon.dist  export-ignore
 /bin                export-ignore
+
+# Binary test fixtures
+*.bin     binary
+*.lzma    binary
