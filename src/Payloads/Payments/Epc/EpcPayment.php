@@ -177,6 +177,10 @@ final readonly class EpcPayment implements Payload
     }
 
     /**
+     * The EPC payload. Reads no configuration: a null version/charset/strictCharset falls
+     * back to the standard's defaults (002, UTF-8, off). `Qr::epc()` and the other manager
+     * entry points fill them from `config('qr.payments.epc.*')` first.
+     *
      * @throws InvalidPayloadException
      */
     public function toQrString(): string

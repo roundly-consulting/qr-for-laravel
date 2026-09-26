@@ -53,7 +53,9 @@ final readonly class PayBySquare implements Payload
     }
 
     /**
-     * The PAY by square string.
+     * The PAY by square string. Reads no configuration: a null `version`/`deburr` falls back
+     * to the standard's defaults (1.2.0, deburr on). `Qr::payBySquare()` and the other manager
+     * entry points fill them from `config('qr.payments.bysquare.*')` first.
      *
      * @throws InvalidPayloadException
      */

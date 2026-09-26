@@ -218,3 +218,11 @@ it('never puts field values into exception messages', function (): void {
 
     $this->fail('expected a failure');
 });
+
+it('applies configured defaults through the manager only, as documented', function (): void {
+    config(['qr.payments.epc.version' => '001']);
+    $payment = new EpcPayment('A', 'SK9611000000002918599669', 'TATRSKBX');
+
+    expect(explode("\n", Qr::epc($payment)->payload()->toQrString())[1])->toBe('001')
+        ->and(explode("\n", $payment->toQrString())[1])->toBe('002');
+});

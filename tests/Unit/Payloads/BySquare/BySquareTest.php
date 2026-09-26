@@ -348,3 +348,11 @@ it('rejects unknown enum values and malformed numbers in the data model', functi
     "\t1\t1\t1\tEUR\t\t\t\t\t\t\t0\t0\t0\tJana\t\t",
     "\t1\t1\t1\tEUR\t\t\t\t\t\t\t1\tSK00\t\t0\t0\tJana\t\t",
 ]);
+
+it('applies configured defaults through the manager only, as documented', function (): void {
+    config(['qr.payments.bysquare.version' => '1.1.0']);
+    $document = new PayBySquare([bsqOrder()]);
+
+    expect(Qr::payBySquare($document)->payload()->toQrString())->toStartWith('04')
+        ->and($document->encode())->toStartWith('08');
+});

@@ -261,6 +261,12 @@ $svg = Qr::epc(new EpcPayment(
 $payment = EpcPayment::fromString($scannedPayload);   // parse (LF or CRLF)
 ```
 
+Configured defaults apply through `Qr::…` only: `Qr::epc($payment)` (and `Qr::make()`, `Qr::svg()`,
+`<x-qr-code>`) fill the fields the payment leaves null from `config('qr.payments.epc.*')`, and
+`Qr::epc($payment)->payload()->toQrString()` is the exact string the code carries. Calling
+`$payment->toQrString()` directly ignores the configuration and uses the standard's defaults
+(version `002`, UTF-8, no strict charset) for those fields.
+
 The payload follows EPC069-12 v3.1: LF-separated elements without a trailing separator, at most
 331 bytes in the declared character set, error correction M and at most version 13 (both fixed).
 
@@ -283,8 +289,9 @@ $document = new PayBySquare(
     invoiceId: '2026-0042',
 );
 
-$svg = Qr::payBySquare($document)->size(220)->svg();
-$string = $document->encode();            // "08…" base32hex string
+$svg = Qr::payBySquare($document)->size(220)->svg();                 // config('qr.payments.bysquare.*') applied
+$string = Qr::payBySquare($document)->payload()->toQrString();        // the string that QR code carries
+$standard = $document->encode();          // standard defaults (1.2.0, deburr on) for null fields — ignores config
 $same = PayBySquare::decode($string);     // parse a PAY by square string
 
 // Standing order and direct debit
@@ -292,6 +299,10 @@ Payment::standingOrder(new StandingOrderDetails(Periodicity::Monthly, day: 15, m
 Payment::directDebit(new DirectDebitDetails(mandateId: 'M-2026-7', maxAmount: Money::ofMinor(5000, 'EUR')), Money::ofMinor(1999, 'EUR'), [$account], $beneficiary);
 Payment::order(null, [$account], $beneficiary, currency: 'EUR');   // amount left to the payer
 ```
+
+`$document->encode()` equals the QR content only while the configuration is at its defaults (or the
+document sets `version`/`deburr` itself); with `QR_BYSQUARE_VERSION=1.1.0`, for example, the code
+carries 1.1.0 while `encode()` still writes 1.2.0.
 
 Version 1.2.0 (default) requires a beneficiary name on every payment; 1.0.0 has no beneficiary
 block. Dates are calendar dates — pass them in the timezone you mean. Only ISO 4217 currencies
