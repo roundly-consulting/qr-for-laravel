@@ -49,9 +49,20 @@ final readonly class QrManager implements QrFactory
         private Translator $translator,
     ) {}
 
+    /**
+     * Payment payloads get the configured EPC / PAY by square defaults for any option they
+     * leave unset, whichever entry point they come through (facade, options form, Blade).
+     */
     public function make(string|Payload $data): PendingQr
     {
-        return new PendingQr($this, is_string($data) ? new Text($data) : $data);
+        $payload = match (true) {
+            is_string($data) => new Text($data),
+            $data instanceof EpcPayment => $data->withDefaults(ConfigGuard::epcVersion(), ConfigGuard::epcCharset(), ConfigGuard::epcStrictCharset()),
+            $data instanceof PayBySquare => $data->withDefaults(ConfigGuard::bySquareVersion(), ConfigGuard::bySquareDeburr()),
+            default => $data,
+        };
+
+        return new PendingQr($this, $payload);
     }
 
     public function text(string $text): PendingQr
@@ -101,12 +112,12 @@ final readonly class QrManager implements QrFactory
 
     public function epc(EpcPayment $payment): PendingQr
     {
-        return $this->make($payment->withDefaults(ConfigGuard::epcVersion(), ConfigGuard::epcCharset(), ConfigGuard::epcStrictCharset()));
+        return $this->make($payment);
     }
 
     public function payBySquare(PayBySquare $document): PendingQr
     {
-        return $this->make($document->withDefaults(ConfigGuard::bySquareVersion(), ConfigGuard::bySquareDeburr()));
+        return $this->make($document);
     }
 
     public function svg(string|Payload $data, ?QrOptions $options = null): Svg

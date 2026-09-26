@@ -180,7 +180,8 @@ it('fills version and deburr from configuration through the manager', function (
     $payload = Qr::payBySquare(new PayBySquare([bsqOrder(new Beneficiary('Ján'))]))->payload();
 
     expect($payload->toQrString())->toStartWith('04')
-        ->and(PayBySquare::decode($payload->toQrString())->serialize())->toContain('Ján');
+        ->and(PayBySquare::decode($payload->toQrString())->serialize())->toContain('Ján')
+        ->and(Qr::make(new PayBySquare([bsqOrder(new Beneficiary('Ján'))]))->payload()->toQrString())->toStartWith('04');
 });
 
 it('enforces version rules when encoding', function (): void {
