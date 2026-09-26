@@ -92,6 +92,15 @@ it('builds mailto links', function (): void {
         ->and((new Email('a@b.co'))->description(translator()))->toBe('QR code to write an e-mail');
 });
 
+it('percent-encodes the mailto address so it cannot add headers (RFC 6068 §2)', function (string $to, string $expected): void {
+    expect((new Email($to, 'Hi'))->toQrString())->toBe($expected);
+})->with([
+    'query delimiters' => ['x?bcc=evil%40evil.com&a@example.com', 'mailto:x%3Fbcc%3Devil%2540evil.com%26a@example.com?subject=Hi'],
+    'fragment and slash' => ['a#b/c@example.com', 'mailto:a%23b%2Fc@example.com?subject=Hi'],
+    'plus and dot stay' => ['jana.nova+tag@example.sk', 'mailto:jana.nova+tag@example.sk?subject=Hi'],
+    'non-ASCII as UTF-8' => ['jána@priklad.sk', 'mailto:j%C3%A1na@priklad.sk?subject=Hi'],
+]);
+
 it('rejects invalid e-mail addresses', function (string $to): void {
     new Email($to);
 })->throws(InvalidPayloadException::class)->with(['', 'not-an-address', 'a@', '<a@b.c>']);

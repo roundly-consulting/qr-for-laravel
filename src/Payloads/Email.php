@@ -11,7 +11,8 @@ use RoundlyConsulting\Qr\Enums\Sensitivity;
 use RoundlyConsulting\Qr\Exceptions\InvalidPayloadException;
 
 /**
- * A `mailto:` link (RFC 6068) with optional subject and body.
+ * A `mailto:` link (RFC 6068) with optional subject and body; the address is percent-encoded
+ * where RFC 6068 requires it.
  */
 final readonly class Email implements Payload
 {
@@ -49,7 +50,21 @@ final readonly class Email implements Payload
             $query[] = 'body='.rawurlencode($this->body);
         }
 
-        return 'mailto:'.$this->to.($query === [] ? '' : '?'.implode('&', $query));
+        return 'mailto:'.self::encodeAddress($this->to).($query === [] ? '' : '?'.implode('&', $query));
+    }
+
+    /**
+     * RFC 6068 §2: `%`, `/`, `?`, `#`, `[`, `]`, `&`, `;`, `=` and every character a URI
+     * cannot hold (incl. each UTF-8 byte of a non-ASCII character) are percent-encoded, so a
+     * valid address such as `x?bcc=…&y@example.com` cannot add a header or a recipient.
+     */
+    private static function encodeAddress(string $address): string
+    {
+        return (string) preg_replace_callback(
+            "/[^A-Za-z0-9\\-._~!$'()*+,:@]/",
+            static fn (array $match): string => rawurlencode($match[0]),
+            $address,
+        );
     }
 
     public function requirements(): PayloadRequirements
