@@ -194,6 +194,18 @@ it('builds vCard 3.0 contacts', function (): void {
         ->and((new VCard('Jana'))->toQrString())->toBe("BEGIN:VCARD\r\nVERSION:3.0\r\nN:Jana;;;;\r\nFN:Jana\r\nEND:VCARD");
 });
 
+it('writes the vCard URL as a URI value, not escaped text (RFC 2426 §3.6.8)', function (string $url, string $line): void {
+    $lines = explode("\r\n", (new VCard('Jana', url: $url))->toQrString());
+
+    expect($lines)->toContain($line)
+        ->and($lines)->toHaveCount(6);
+})->with([
+    'commas and semicolons stay' => ['https://vet.sk/a;b,c?x=1,2', 'URL:https://vet.sk/a;b,c?x=1,2'],
+    'backslash stays' => ['https://vet.sk/a\\b', 'URL:https://vet.sk/a\\b'],
+    'line breaks cannot start a property' => ["https://vet.sk/\r\nNOTE:x", 'URL:https://vet.sk/%0D%0ANOTE:x'],
+    'spaces and controls percent-encoded' => ["https://vet.sk/a b\tc", 'URL:https://vet.sk/a%20b%09c'],
+]);
+
 it('validates vCard fields', function (Closure $build): void {
     expect($build)->toThrow(InvalidPayloadException::class);
 })->with([

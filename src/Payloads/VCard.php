@@ -12,8 +12,9 @@ use RoundlyConsulting\Qr\Enums\Sensitivity;
 use RoundlyConsulting\Qr\Exceptions\InvalidPayloadException;
 
 /**
- * A vCard 3.0 contact (RFC 2426): CRLF line breaks, `\ , ;` and newlines escaped, no line
- * folding. The whole name goes into the family-name component of `N` and into `FN`.
+ * A vCard 3.0 contact (RFC 2426): CRLF line breaks, `\ , ;` and newlines escaped in text
+ * values, the `URL` written as a URI (spaces and controls percent-encoded), no line folding.
+ * The whole name goes into the family-name component of `N` and into `FN`.
  */
 final readonly class VCard implements Payload
 {
@@ -71,7 +72,7 @@ final readonly class VCard implements Payload
         }
 
         if ($this->url !== null && $this->url !== '') {
-            $lines[] = 'URL:'.self::escape($this->url);
+            $lines[] = 'URL:'.self::uri($this->url);
         }
 
         if ($this->address !== null && $this->address !== '') {
@@ -100,6 +101,16 @@ final readonly class VCard implements Payload
     public function description(Translator $translator): string
     {
         return (string) $translator->get('qr::qr.descriptions.vcard');
+    }
+
+    /**
+     * `URL` has the URI value type (RFC 2426 §3.6.8), so it is not TEXT-escaped; spaces and
+     * control characters — which a URI cannot hold and which would break the line format —
+     * are percent-encoded.
+     */
+    private static function uri(string $value): string
+    {
+        return (string) preg_replace_callback('/[\x00-\x20\x7F]/', static fn (array $match): string => rawurlencode($match[0]), $value);
     }
 
     private static function escape(string $value): string
