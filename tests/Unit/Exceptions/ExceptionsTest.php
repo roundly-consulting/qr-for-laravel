@@ -30,6 +30,7 @@ it('builds every named constructor with a reason key and no payload value', func
     'ecc' => [fn () => InvalidOptionException::errorCorrection(), 'error_correction', 'errorCorrection'],
     'locked' => [fn () => InvalidOptionException::lockedByPayload('eci', 'EPC'), 'locked_by_payload', 'eci'],
     'bounds' => [fn () => InvalidOptionException::outOfBounds(30, 1, 21), 'out_of_bounds', 'module'],
+    'eci' => [fn () => InvalidOptionException::eci(-1), 'eci', 'eci'],
     'render as' => [fn () => InvalidOptionException::renderAs(), 'render_as', 'as'],
     'unencodable' => [fn () => UnencodableCharacterException::at(Mode::Numeric, 3), 'unencodable_character', 'data'],
     'required' => [fn () => InvalidPayloadException::required('Wifi', 'password'), 'required', 'password'],

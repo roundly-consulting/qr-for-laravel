@@ -32,6 +32,8 @@ class InvalidOptionException extends QrException
 
     public const string REASON_RENDER_AS = 'render_as';
 
+    public const string REASON_ECI = 'eci';
+
     /**
      * Final so the `new static` named constructors stay safe for subclasses.
      */
@@ -83,6 +85,11 @@ class InvalidOptionException extends QrException
     public static function outOfBounds(int $x, int $y, int $size): static
     {
         return new static(sprintf('Module (%d, %d) is outside the %dx%d matrix.', $x, $y, $size, $size), self::REASON_OUT_OF_BOUNDS, 'module');
+    }
+
+    public static function eci(int $designator): static
+    {
+        return new static(sprintf('Invalid ECI designator %d: expected 0-999999.', $designator), self::REASON_ECI, 'eci');
     }
 
     public static function renderAs(): static

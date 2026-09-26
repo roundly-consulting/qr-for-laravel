@@ -56,3 +56,11 @@ arch('the package base exception is abstract')
     ->expect(QrException::class)
     ->toBeAbstract()
     ->toExtend(RuntimeException::class);
+
+arch('the encoder core is framework-free')
+    ->expect('RoundlyConsulting\Qr\Encoder')
+    ->not->toUse('Illuminate');
+
+arch('encoder internals stay behind the public encoder surface')
+    ->expect('RoundlyConsulting\Qr\Encoder')
+    ->not->toUse(['config', 'app', '__']);

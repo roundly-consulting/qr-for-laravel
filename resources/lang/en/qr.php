@@ -49,6 +49,7 @@ return [
         'error_correction' => 'The error correction level must be L, M, Q or H.',
         'locked_by_payload' => 'The :field option is fixed by the payment standard.',
         'out_of_bounds' => 'The module is outside the QR code.',
+        'eci' => 'The ECI designator must be between 0 and 999999.',
         'render_as' => 'A QR code can be rendered as "svg" or "img".',
         'color' => 'The :field colour is not allowed.',
         'unencodable_character' => 'The content contains a character the chosen mode cannot encode.',
