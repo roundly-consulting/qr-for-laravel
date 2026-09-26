@@ -64,3 +64,22 @@ arch('the encoder core is framework-free')
 arch('encoder internals stay behind the public encoder surface')
     ->expect('RoundlyConsulting\Qr\Encoder')
     ->not->toUse(['config', 'app', '__']);
+
+arch('src only uses allowed vendor roots')
+    ->expect('RoundlyConsulting\Qr')
+    ->toOnlyUse([
+        'RoundlyConsulting\Qr',
+        'RoundlyConsulting\Crypto',
+        'RoundlyConsulting\Enums',
+        'RoundlyConsulting\PackageToolkit',
+        'Illuminate',
+        'Closure',
+        'SensitiveParameter',
+        'RuntimeException',
+        'Stringable',
+        'Throwable',
+        // Laravel global helpers used unqualified
+        'app',
+        'config',
+        'class_basename',
+    ]);

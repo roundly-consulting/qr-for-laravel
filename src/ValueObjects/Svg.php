@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace RoundlyConsulting\Qr\ValueObjects;
 
+use Closure;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Http\Request;
@@ -34,11 +35,12 @@ final class Svg implements Htmlable, Responsable, Stringable
 
     /**
      * @param  array<string, string>  $rootAttributes  already escaped, in output order
+     * @param  QrMatrix|(Closure(): QrMatrix)  $matrix  a closure defers encoding (cache hits)
      */
     public function __construct(
         private readonly array $rootAttributes,
         private readonly string $content,
-        private readonly QrMatrix $matrix,
+        private QrMatrix|Closure $matrix,
         private readonly Sensitivity $sensitivity,
         private readonly ?int $width,
         private readonly int $viewBoxSize,
@@ -140,6 +142,10 @@ final class Svg implements Htmlable, Responsable, Stringable
 
     public function matrix(): QrMatrix
     {
+        if ($this->matrix instanceof Closure) {
+            $this->matrix = ($this->matrix)();
+        }
+
         return $this->matrix;
     }
 
@@ -164,6 +170,53 @@ final class Svg implements Htmlable, Responsable, Stringable
     public function viewBoxSize(): int
     {
         return $this->viewBoxSize;
+    }
+
+    /**
+     * The cache representation: plain JSON of the markup parts, restorable without
+     * unserialising objects. The matrix is not stored; a restored SVG re-encodes it only
+     * if {@see self::matrix()} is called.
+     *
+     * @internal
+     */
+    public function toCachePayload(): string
+    {
+        return (string) json_encode([
+            'attributes' => $this->rootAttributes,
+            'content' => $this->content,
+            'width' => $this->width,
+            'viewBox' => $this->viewBoxSize,
+        ], JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * Restore a cached public SVG, or null when the entry is unreadable (it is then
+     * re-rendered).
+     *
+     * @param  Closure(): QrMatrix  $matrix
+     *
+     * @internal
+     */
+    public static function fromCachePayload(string $payload, Closure $matrix): ?self
+    {
+        $data = json_decode($payload, true);
+
+        if (! is_array($data) || ! is_array($data['attributes'] ?? null) || ! is_string($data['content'] ?? null)
+            || ! is_int($data['viewBox'] ?? null) || ! array_key_exists('width', $data) || ! (is_int($data['width']) || $data['width'] === null)) {
+            return null;
+        }
+
+        $attributes = [];
+
+        foreach ($data['attributes'] as $name => $value) {
+            if (! is_string($name) || ! is_string($value)) {
+                return null;
+            }
+
+            $attributes[$name] = $value;
+        }
+
+        return new self($attributes, $data['content'], $matrix, Sensitivity::Public, $data['width'], $data['viewBox']);
     }
 
     /**
