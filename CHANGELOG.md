@@ -1,30 +1,30 @@
 # Changelog
 
-All notable changes to `qr-for-laravel` will be documented in this file.
+All notable changes to `qr-for-laravel` are documented in this file. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
+[Semantic Versioning](https://semver.org/).
 
-## 1.0.0 — unreleased
+## Unreleased
 
-- QR Code Model 2 encoder (ISO/IEC 18004:2015): versions 1–40, levels L/M/Q/H with optional
-  boost, numeric/alphanumeric/byte/kanji segments with optimal segmentation, ECI 26, automatic or
-  forced masks.
-- SVG renderer: single even-odd path, square/rounded/dot modules, rounded finders, finder colour,
-  accessible title/description, data URIs, `<img>` tags, HTTP responses with sensitivity-aware
-  caching headers, downloads.
-- Fluent `PendingQr` builder, `Qr` facade, `QrOptions`, `<x-qr-code>` Blade component,
-  `qr:make` command, `FitsInQrCode` rule.
-- Payloads: text, URL, e-mail, phone, SMS, Wi-Fi (WPA/WEP/SAE), vCard 3.0, geo, otpauth
-  (TOTP/HOTP), EPC069-12 v3.1 SEPA credit transfer, PAY by square 1.0.0/1.1.0/1.2.0 (encode and
-  decode).
-- Banking primitives: IBAN, BIC, ISO 11649 creditor reference, validation rules, `AsIban` cast.
-- In-process matrix memo and optional rendered-SVG cache for public payloads.
-- `Testing\MatrixDecoder` for host test suites.
+Initial public release.
 
-Deviations from the implementation plan:
+### Added
 
-- `Rules\FitsInQrCode` takes `?ErrorCorrection $errorCorrection = null, ?int $maxVersion = null`
-  instead of fixed `Medium` / `40` defaults: unset arguments follow `qr.error_correction`,
-  `qr.versions.max`, `qr.eci` and `qr.kanji`, so the rule never passes input the encoder then rejects.
-- `Payloads\VCard` gained the structured name parts (`familyName`, `givenName`, `additionalNames`,
-  `honorificPrefixes`, `honorificSuffixes`) written to `N`; `name` stays the display name (`FN`). A
-  name given only as one string now goes into the given-name component (`N:;Jana Nováková;;;`)
-  instead of the family-name component the plan specified, and is never split heuristically.
+- A native ISO/IEC 18004 QR Code Model 2 encoder: versions 1–40, error correction L/M/Q/H,
+  optimal numeric / alphanumeric / byte / kanji segmentation, UTF-8 via ECI and ISO mask scoring.
+- One optimised SVG renderer with square, rounded or dot modules, rounded finders, colours and an
+  accessible `<title>` / `<desc>`.
+- The `Qr` facade with an immutable, fluent builder (`size()`, `margin()`, …), a `QrOptions`
+  one-call form, `Qr::matrix()` and `info()` for encoding details.
+- Typed payloads: text, URL, e-mail, phone, SMS, Wi-Fi (WPA / WEP / WPA3 SAE), vCard, geo and
+  `otpauth` 2FA enrolment codes.
+- SEPA credit transfer codes (EPC069-12) via `Qr::epc()` and Slovak PAY by square payments,
+  standing orders and direct debits via `Qr::payBySquare()`, with amounts as money-for-laravel
+  `Money`.
+- Banking primitives `Iban`, `Bic` and `CreditorReference`, the `Iban`, `Bic`,
+  `CreditorReference` and `FitsInQrCode` validation rules, and an `AsIban` Eloquent cast.
+- The `<x-qr-code>` Blade component, data URIs, `<img>` tags and SVG HTTP responses with
+  download support.
+- Sensitivity-aware caching and headers: public, personal and secret payloads — 2FA seeds and
+  Wi-Fi passwords are never cached or served cacheably.
+- The `qr:make` command to render a code (or print its encoding details) from the CLI.
