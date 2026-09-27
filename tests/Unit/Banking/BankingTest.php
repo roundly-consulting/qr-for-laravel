@@ -20,8 +20,8 @@ it('computes ISO 7064 MOD 97-10 remainders', function (): void {
 });
 
 it('pins the registry and keeps every entry consistent', function (): void {
-    expect(IbanRegistry::COUNTRIES)->toHaveCount(103)
-        ->and(IbanRegistry::RELEASE)->toBe('2024-04')
+    expect(IbanRegistry::COUNTRIES)->toHaveCount(89)
+        ->and(IbanRegistry::RELEASE)->toBe('2026-09')
         ->and(IbanRegistry::has('XX'))->toBeFalse()
         ->and(IbanRegistry::length('XX'))->toBeNull()
         ->and(IbanRegistry::pattern('XX'))->toBeNull()
@@ -49,6 +49,9 @@ it('accepts valid IBANs in electronic and print form', function (string $value):
     'SK9611000000002918599669', 'SK5681800000007000157042', 'CZ6508000000192000145399', 'AT611904300234573201',
     'DE71110220330123456789', 'BE72000000001616', 'FR1420041010050500013M02606', 'CH9300762011623852957',
     'GB29NWBK60161331926819', 'SK96 1100 0000 0029 1859 9669', "sk96\u{00A0}1100-0000-0029-1859-9669",
+    'registry 103: Honduras' => 'HN88CABF00000000000250005469',
+    'registry 103: Yemen' => 'YE15CBYE0001018861234567891234',
+    'registry 103: Brazil alphanumeric bank code' => 'BR6699999A03000010009795493C1',
 ]);
 
 it('rejects invalid IBANs with a reason', function (string $value, string $reason): void {
@@ -71,6 +74,9 @@ it('rejects invalid IBANs with a reason', function (string $value, string $reaso
     ['AT611904300234573202', 'iban_checksum'],
     ['SK96110000000029185996', 'iban_length'],
     ['XX9611000000002918599669', 'iban_country'],
+    'territory folded into FR' => ['GF4120041010050500013M02606', 'iban_country'],
+    'territory folded into GB' => ['JE90NWBK60161331926819', 'iban_country'],
+    'territory folded into FI' => ['AX2112345600000785', 'iban_country'],
     ['SK961100000000291859966A', 'iban_format'],
     ['', 'iban_format'],
     ['1234', 'iban_format'],
