@@ -60,6 +60,21 @@ it('allows other schemes only when opted in', function (): void {
         ->and($payload->description(translator()))->toBe('QR code linking to mailto');
 });
 
+it('treats opted-in otpauth and Wi-Fi URLs as secrets, like raw text', function (string $url, bool $locked, string $description): void {
+    $payload = new Url($url, ['otpauth', 'otpauth-migration', 'wifi']);
+
+    expect($payload->toQrString())->toBe($url)
+        ->and($payload->sensitivity())->toBe(Sensitivity::Secret)
+        ->and($payload->requirements()->locks('sensitivity'))->toBe($locked)
+        ->and($payload->requirements()->segmentation)->toBe(Segmentation::Optimal)
+        ->and($payload->description(translator()))->toBe($description);
+})->with([
+    'totp' => ['otpauth://totp/Acme:u?secret=JBSWY3DPEHPK3PXP&issuer=Acme', true, 'QR code to set up two-factor authentication'],
+    'upper-case scheme' => ['OTPAUTH://hotp/x?secret=AB', true, 'QR code to set up two-factor authentication'],
+    'migration' => ['otpauth-migration://offline?data=abc', true, 'QR code to set up two-factor authentication'],
+    'wifi' => ['WIFI:T:WPA;S:x;P:12345678;;', false, 'QR code to join a Wi-Fi network'],
+]);
+
 it('rejects unsafe or malformed URLs', function (string $url, string $reason): void {
     try {
         new Url($url);

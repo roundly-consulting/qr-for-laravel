@@ -309,8 +309,9 @@ $svg = Qr::otpauth(Otpauth::hotp(secret: $secret, account: 'user@acme.io', issue
 
 2FA codes are always `Sensitivity::Secret` — never memoised or cached, served with
 `Cache-Control: no-store` and no ETag — and the sensitivity cannot be lowered. A raw string
-starting with `otpauth:`/`otpauth-migration:`/`WIFI:` passed to *any* entry point gets the same
-treatment.
+starting with `otpauth:`/`otpauth-migration:`/`WIFI:` passed to *any* entry point — `Qr::make()`,
+`Qr::text()`, `Qr::svg()`, `<x-qr-code>`, or `Qr::url()` with that scheme opted in — gets the
+same treatment (`WIFI:` is `Secret` but may be lowered, like `Qr::wifi()`).
 
 ### SEPA credit transfer (EPC069-12)
 
@@ -468,7 +469,7 @@ with them. Payment codes should stay square and black on white.
 |---|---|---|---|
 | `Public` | text, URLs | yes | `public`, ETag |
 | `Personal` | payments, e-mail, phone, SMS, vCard, geo | no | `private`, ETag |
-| `Secret` | otpauth, Wi-Fi, otpauth/Wi-Fi-looking text | no | `no-store`, no ETag |
+| `Secret` | otpauth, Wi-Fi, otpauth/Wi-Fi-looking text or opted-in URLs | no | `no-store`, no ETag |
 
 `->sensitivity()` raises or lowers the default (e.g. a guest Wi-Fi poster may be `Public`);
 2FA seeds stay `Secret`.

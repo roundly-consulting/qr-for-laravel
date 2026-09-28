@@ -2,11 +2,14 @@
 
 declare(strict_types=1);
 
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Route;
 use RoundlyConsulting\Qr\Enums\Sensitivity;
 use RoundlyConsulting\Qr\Enums\WifiSecurity;
 use RoundlyConsulting\Qr\Exceptions\InvalidOptionException;
 use RoundlyConsulting\Qr\Facades\Qr;
 use RoundlyConsulting\Qr\Payloads\Text;
+use RoundlyConsulting\Qr\Support\MatrixMemo;
 
 it('treats otpauth and Wi-Fi strings as secrets through every entry point', function (Closure $sensitivity): void {
     expect($sensitivity())->toBe(Sensitivity::Secret);
@@ -15,6 +18,9 @@ it('treats otpauth and Wi-Fi strings as secrets through every entry point', func
     'make' => [fn () => Qr::make(' WIFI:T:WPA;S:x;P:12345678;;')->svg()->sensitivity()],
     'svg shortcut' => [fn () => Qr::svg('otpauth-migration://offline?data=abc')->sensitivity()],
     'payload' => [fn () => Qr::make(new Text('otpauth://hotp/x?secret=AB'))->svg()->sensitivity()],
+    'url otpauth' => [fn () => Qr::url('otpauth://totp/A:b?secret=JBSWY3DP', ['otpauth'])->svg()->sensitivity()],
+    'url otpauth-migration' => [fn () => Qr::url('otpauth-migration://offline?data=abc', ['otpauth-migration'])->svg()->sensitivity()],
+    'url wifi' => [fn () => Qr::url('WIFI:T:WPA;S:x;P:12345678;;', ['wifi'])->svg()->sensitivity()],
 ]);
 
 it('locks 2FA seeds at Secret', function (Closure $build): void {
@@ -22,6 +28,7 @@ it('locks 2FA seeds at Secret', function (Closure $build): void {
 })->with([
     fn () => Qr::otpauth('otpauth://totp/A:b?secret=JBSWY3DP')->sensitivity(Sensitivity::Public)->svg(),
     fn () => Qr::text('otpauth://totp/A:b?secret=JBSWY3DP')->sensitivity(Sensitivity::Personal)->matrix(),
+    fn () => Qr::url('otpauth://totp/A:b?secret=JBSWY3DP', ['otpauth'])->sensitivity(Sensitivity::Public)->svg(),
 ]);
 
 it('allows restating Secret on a locked seed', function (): void {
@@ -32,4 +39,20 @@ it('lets hosts raise or lower unlocked sensitivities', function (): void {
     expect(Qr::wifi('Guest', 'guest-password', WifiSecurity::Wpa)->sensitivity(Sensitivity::Public)->svg()->sensitivity())->toBe(Sensitivity::Public)
         ->and(Qr::email('a@b.co')->sensitivity(Sensitivity::Public)->svg()->sensitivity())->toBe(Sensitivity::Public)
         ->and(Qr::text('public')->sensitivity(Sensitivity::Secret)->svg()->sensitivity())->toBe(Sensitivity::Secret);
+});
+
+it('keeps a 2FA seed sent through Qr::url out of the memo, the SVG cache and shared HTTP caches', function (): void {
+    config(['cache.default' => 'array', 'qr.cache.enabled' => true, 'qr.cache.store' => 'array']);
+    $memo = app(MatrixMemo::class);
+    $memo->flush();
+    Route::get('/qr/seed', fn () => Qr::url('otpauth://totp/Acme:u?secret=JBSWY3DPEHPK3PXP&issuer=Acme', ['otpauth']));
+
+    $response = $this->get('/qr/seed')->assertOk()->assertHeaderMissing('ETag');
+    Qr::url('WIFI:T:WPA;S:x;P:12345678;;', ['wifi'])->svg();
+
+    $store = Cache::store('array')->getStore();
+
+    expect($response->headers->get('Cache-Control'))->toContain('no-store')
+        ->and($memo->count())->toBe(0)
+        ->and((new ReflectionProperty($store, 'storage'))->getValue($store))->toBe([]);
 });

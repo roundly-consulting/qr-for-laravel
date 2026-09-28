@@ -10,11 +10,16 @@ use RoundlyConsulting\Qr\DataTransferObjects\PayloadRequirements;
 use RoundlyConsulting\Qr\Enums\Segmentation;
 use RoundlyConsulting\Qr\Enums\Sensitivity;
 use RoundlyConsulting\Qr\Exceptions\InvalidPayloadException;
+use RoundlyConsulting\Qr\Support\SecretContent;
 
 /**
  * A link. The scheme must be on the allow-list (http and https by default), so a code
  * never carries `javascript:`, `data:` or `file:` unless a host opts in. Non-ASCII paths
  * and internationalised hosts are accepted as given.
+ *
+ * An opted-in `otpauth`, `otpauth-migration` or `wifi` URL carries a 2FA seed or a Wi-Fi
+ * password, so it gets the same treatment as the raw string would through {@see Text}:
+ * Secret (never memoised, cached or served shareable), locked for the otpauth forms.
  */
 final readonly class Url implements Payload
 {
@@ -71,16 +76,25 @@ final readonly class Url implements Payload
 
     public function requirements(): PayloadRequirements
     {
-        return new PayloadRequirements(segmentation: Segmentation::Optimal);
+        return new PayloadRequirements(
+            segmentation: Segmentation::Optimal,
+            locked: SecretContent::isOtpauth($this->url) ? [PayloadRequirements::SENSITIVITY] : [],
+        );
     }
 
     public function sensitivity(): Sensitivity
     {
-        return Sensitivity::Public;
+        return SecretContent::isSecret($this->url) ? Sensitivity::Secret : Sensitivity::Public;
     }
 
     public function description(Translator $translator): string
     {
-        return (string) $translator->get('qr::qr.descriptions.url', ['host' => $this->host !== '' ? $this->host : $this->scheme]);
+        $key = match (true) {
+            SecretContent::isOtpauth($this->url) => 'otpauth',
+            SecretContent::isWifi($this->url) => 'wifi',
+            default => 'url',
+        };
+
+        return (string) $translator->get('qr::qr.descriptions.'.$key, ['host' => $this->host !== '' ? $this->host : $this->scheme]);
     }
 }
