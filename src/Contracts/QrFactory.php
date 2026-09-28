@@ -5,14 +5,18 @@ declare(strict_types=1);
 namespace RoundlyConsulting\Qr\Contracts;
 
 use RoundlyConsulting\Qr\DataTransferObjects\QrOptions;
+use RoundlyConsulting\Qr\Enums\ErrorCorrection;
+use RoundlyConsulting\Qr\Enums\Segmentation;
 use RoundlyConsulting\Qr\Enums\SmsFormat;
 use RoundlyConsulting\Qr\Enums\WifiSecurity;
+use RoundlyConsulting\Qr\Exceptions\InvalidOptionException;
 use RoundlyConsulting\Qr\Payloads\Otpauth;
 use RoundlyConsulting\Qr\Payloads\Payments\BySquare\PayBySquare;
 use RoundlyConsulting\Qr\Payloads\Payments\Epc\EpcPayment;
 use RoundlyConsulting\Qr\Payloads\Text;
 use RoundlyConsulting\Qr\Payloads\VCard;
 use RoundlyConsulting\Qr\PendingQr;
+use RoundlyConsulting\Qr\ValueObjects\EncodingInfo;
 use RoundlyConsulting\Qr\ValueObjects\QrMatrix;
 use RoundlyConsulting\Qr\ValueObjects\Svg;
 use SensitiveParameter;
@@ -59,4 +63,21 @@ interface QrFactory
     public function svg(string|Payload $data, ?QrOptions $options = null): Svg;
 
     public function matrix(string|Payload $data, ?QrOptions $options = null): QrMatrix;
+
+    /**
+     * How the data would be encoded — version, level, mask, segments, bit budget — without
+     * rendering. Shortcut for `make($data)->withOptions($options)->info()`.
+     */
+    public function info(string|Payload $data, ?QrOptions $options = null): EncodingInfo;
+
+    /**
+     * Whether `make($data)` fits in a symbol no larger than `$maxVersion` at `$level`. Unset
+     * arguments take what the payload requires, then the configuration — the settings the
+     * data would really be encoded with — so a passing check never meets a
+     * DataTooLongException later. Payload-locked options still throw when overridden.
+     *
+     * @throws InvalidOptionException for an out-of-range `$maxVersion` or an override of a
+     *                                payload-locked level/segmentation
+     */
+    public function fits(string|Payload $data, ?ErrorCorrection $level = null, ?int $maxVersion = null, ?Segmentation $segmentation = null): bool;
 }

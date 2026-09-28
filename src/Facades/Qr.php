@@ -23,6 +23,12 @@ use RoundlyConsulting\Qr\QrManager;
  * @method static \RoundlyConsulting\Qr\PendingQr payBySquare(\RoundlyConsulting\Qr\Payloads\Payments\BySquare\PayBySquare $document)
  * @method static \RoundlyConsulting\Qr\ValueObjects\Svg svg(string|\RoundlyConsulting\Qr\Contracts\Payload $data, ?\RoundlyConsulting\Qr\DataTransferObjects\QrOptions $options = null)
  * @method static \RoundlyConsulting\Qr\ValueObjects\QrMatrix matrix(string|\RoundlyConsulting\Qr\Contracts\Payload $data, ?\RoundlyConsulting\Qr\DataTransferObjects\QrOptions $options = null)
+ * @method static \RoundlyConsulting\Qr\ValueObjects\EncodingInfo info(string|\RoundlyConsulting\Qr\Contracts\Payload $data, ?\RoundlyConsulting\Qr\DataTransferObjects\QrOptions $options = null)
+ * @method static bool fits(string|\RoundlyConsulting\Qr\Contracts\Payload $data, ?\RoundlyConsulting\Qr\Enums\ErrorCorrection $level = null, ?int $maxVersion = null, ?\RoundlyConsulting\Qr\Enums\Segmentation $segmentation = null)
+ *
+ * No fake: encoding is pure and deterministic — the same input always yields the same symbol,
+ * and nothing is written, queued, mailed or sent. Assert on the real output instead:
+ * `Testing\MatrixDecoder::decode(Qr::matrix($data))` reads a symbol back to its bytes.
  *
  * @see QrManager
  */

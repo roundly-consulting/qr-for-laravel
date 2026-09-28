@@ -34,15 +34,44 @@ final class Encoder
             throw DataTooLongException::input(strlen($data), self::MAX_INPUT_BYTES);
         }
 
+        return $this->build($this->segmenter($data, $options), $options);
+    }
+
+    /**
+     * Whether `encode()` would find a version for the data — the same input limit, segments,
+     * ECI header and version window — without building the symbol (no error correction,
+     * placement or mask evaluation), so it is cheap enough for validation.
+     */
+    public function fits(string $data, EncodeOptions $options = new EncodeOptions): bool
+    {
+        if (strlen($data) > self::MAX_INPUT_BYTES) {
+            return false;
+        }
+
+        try {
+            $this->selectVersion($this->segmenter($data, $options), $options);
+        } catch (DataTooLongException) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * The per-version segment builder; segments only change between the three
+     * character-count bands (1–9, 10–26, 27–40), so each band is segmented once.
+     *
+     * @return Closure(int): list<Segment>
+     */
+    private function segmenter(string $data, EncodeOptions $options): Closure
+    {
         $groups = [];
 
-        $segmentsFor = function (int $version) use ($data, $options, &$groups): array {
+        return function (int $version) use ($data, $options, &$groups): array {
             $group = $version <= 9 ? 0 : ($version <= 26 ? 1 : 2);
 
             return $groups[$group] ??= $this->segmentsWithEci($data, $options, $version);
         };
-
-        return $this->build($segmentsFor, $options);
     }
 
     /**

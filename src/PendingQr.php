@@ -362,6 +362,17 @@ final class PendingQr implements Htmlable, Responsable, Stringable
         return $this->matrix()->info();
     }
 
+    /**
+     * Whether this code fits with its current settings — the version window, level, ECI policy,
+     * segmentation and kanji switch `matrix()` would use — without building it.
+     *
+     * @throws InvalidOptionException for an override of a locked option
+     */
+    public function fits(): bool
+    {
+        return $this->manager->encoderFits($this->payload->toQrString(), $this->encodeOptions());
+    }
+
     public function svg(): Svg
     {
         $encode = $this->encodeOptions();

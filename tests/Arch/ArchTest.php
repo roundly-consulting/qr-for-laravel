@@ -58,6 +58,9 @@ ArchPresets::noDebuggingLeftovers();
  *    `*_model` key; both would be vacuous.
  *  - morphColumnsUseTheSeam — no migrations; the preset fails on a missing directory by
  *    design.
+ *  - modelsGoThroughTheFacade — no `Models`, `Concerns` or `Traits` namespace (the `AsIban`
+ *    cast and the rules hold no behaviour a fake would need to see); the preset fails on an
+ *    empty scan by design.
  */
 
 arch('no third-party QR vendors are used')

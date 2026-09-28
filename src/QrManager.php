@@ -13,6 +13,8 @@ use RoundlyConsulting\Qr\DataTransferObjects\EncodeOptions;
 use RoundlyConsulting\Qr\DataTransferObjects\QrOptions;
 use RoundlyConsulting\Qr\DataTransferObjects\SvgOptions;
 use RoundlyConsulting\Qr\Encoder\Encoder;
+use RoundlyConsulting\Qr\Enums\ErrorCorrection;
+use RoundlyConsulting\Qr\Enums\Segmentation;
 use RoundlyConsulting\Qr\Enums\Sensitivity;
 use RoundlyConsulting\Qr\Enums\SmsFormat;
 use RoundlyConsulting\Qr\Enums\WifiSecurity;
@@ -31,6 +33,7 @@ use RoundlyConsulting\Qr\Support\ConfigGuard;
 use RoundlyConsulting\Qr\Support\MatrixMemo;
 use RoundlyConsulting\Qr\Support\SvgCache;
 use RoundlyConsulting\Qr\Svg\SvgRenderer;
+use RoundlyConsulting\Qr\ValueObjects\EncodingInfo;
 use RoundlyConsulting\Qr\ValueObjects\QrMatrix;
 use RoundlyConsulting\Qr\ValueObjects\Svg;
 use SensitiveParameter;
@@ -130,9 +133,51 @@ final readonly class QrManager implements QrFactory
         return $this->withOptions($data, $options)->matrix();
     }
 
+    public function info(string|Payload $data, ?QrOptions $options = null): EncodingInfo
+    {
+        return $this->withOptions($data, $options)->info();
+    }
+
+    public function fits(string|Payload $data, ?ErrorCorrection $level = null, ?int $maxVersion = null, ?Segmentation $segmentation = null): bool
+    {
+        $pending = $this->make($data);
+
+        if ($level !== null) {
+            $pending = $pending->errorCorrection($level);
+        }
+
+        if ($segmentation !== null) {
+            $pending = $pending->segmentation($segmentation);
+        }
+
+        // The question is about the ceiling: open the window from version 1 so a configured
+        // minimum above `$maxVersion` cannot turn a fit into an invalid range.
+        if ($maxVersion !== null) {
+            $pending = $pending->versions(1, $maxVersion);
+        }
+
+        return $pending->fits();
+    }
+
+    /**
+     * The translator PendingQr reads its default title and payload descriptions from.
+     *
+     * @internal
+     */
     public function translator(): Translator
     {
         return $this->translator;
+    }
+
+    /**
+     * Whether the encoder finds a version for the data under the resolved options — no
+     * symbol is built, and nothing goes through the memo or the cache.
+     *
+     * @internal
+     */
+    public function encoderFits(string $data, EncodeOptions $options): bool
+    {
+        return $this->encoder->fits($data, $options);
     }
 
     /**
