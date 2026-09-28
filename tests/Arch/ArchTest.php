@@ -78,9 +78,13 @@ arch('the package base exception is abstract')
     ->toBeAbstract()
     ->toExtend(RuntimeException::class);
 
-arch('the encoder and banking cores are framework-free')
-    ->expect(['RoundlyConsulting\Qr\Encoder', 'RoundlyConsulting\Qr\Banking', 'RoundlyConsulting\Qr\Compression'])
-    ->not->toUse('Illuminate');
+// One case per core: Pest's `->not->toUse()` over a multi-element `expect([...])` fails only
+// when EVERY subject uses the target, so one framework-bound core would slip through.
+foreach (['Encoder', 'Banking', 'Compression'] as $core) {
+    arch("the {$core} core is framework-free")
+        ->expect("RoundlyConsulting\\Qr\\{$core}")
+        ->not->toUse('Illuminate');
+}
 
 arch('encoder internals stay behind the public encoder surface')
     ->expect('RoundlyConsulting\Qr\Encoder')
