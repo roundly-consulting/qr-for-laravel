@@ -14,8 +14,12 @@ Initial public release.
   optimal numeric / alphanumeric / byte / kanji segmentation, UTF-8 via ECI and ISO mask scoring.
 - One optimised SVG renderer with square, rounded or dot modules, rounded finders, colours and an
   accessible `<title>` / `<desc>`.
-- The `Qr` facade with an immutable, fluent builder (`size()`, `margin()`, …), a `QrOptions`
-  one-call form, `Qr::matrix()` and `info()` for encoding details.
+- The `Qr` facade over the injectable `QrFactory` contract, with an immutable, fluent builder
+  (`size()`, `margin()`, …), a `QrOptions` one-call form, `Qr::matrix()` and one-call
+  `Qr::info()` for encoding details.
+- `Qr::fits($data, ?$level, ?$maxVersion, ?$segmentation)` and `PendingQr::fits()`: whether data
+  would encode — under the payload's requirements and the configuration — without building the
+  symbol. The `FitsInQrCode` rule is its validation face.
 - Typed payloads: text, URL, e-mail, phone, SMS, Wi-Fi (WPA / WEP / WPA3 SAE), vCard, geo and
   `otpauth` 2FA enrolment codes.
 - SEPA credit transfer codes (EPC069-12) via `Qr::epc()` and Slovak PAY by square payments,

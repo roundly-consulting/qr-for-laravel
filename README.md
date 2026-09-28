@@ -202,7 +202,55 @@ use RoundlyConsulting\Qr\DataTransferObjects\QrOptions;
 
 $svg = Qr::svg('https://example.com', new QrOptions(size: 200, errorCorrection: ErrorCorrection::Medium));
 $matrix = Qr::matrix('hello', new QrOptions(mask: 2));
+$info = Qr::info('hello', new QrOptions(errorCorrection: ErrorCorrection::High)); // EncodingInfo
 ```
+
+### Does it fit?
+
+`Qr::fits()` answers "would this encode?" without building the symbol — cheap enough for a
+form, a preview or a queue guard. Unset arguments take what the payload requires, then the
+configuration (the settings the data would really be encoded with), so `true` never meets a
+`DataTooLongException` later:
+
+```php
+use RoundlyConsulting\Qr\Enums\{ErrorCorrection, Segmentation};
+
+Qr::fits($request->input('text'));                          // configured level + version window
+Qr::fits($text, ErrorCorrection::Medium, maxVersion: 13);   // explicit level and ceiling
+Qr::fits($digits, segmentation: Segmentation::Byte);
+Qr::fits($epcPayment);                                      // EPC's own cap (v13, level M) applies
+
+Qr::url($link)->errorCorrection('H')->version(3)->fits();   // fluent: the builder's current settings
+```
+
+Overriding an option a payment payload locks (EPC's level, for instance) throws
+`InvalidOptionException`, exactly as rendering it would. The `FitsInQrCode` rule below is the
+validation face of the same check.
+
+### Without the facade
+
+The facade's root is the `QrFactory` contract (bound as a singleton to `QrManager`, also
+resolvable by that class). Inject it for the identical API:
+
+```php
+use RoundlyConsulting\Qr\Contracts\QrFactory;
+use RoundlyConsulting\Qr\PendingQr;
+
+final class TableQrController
+{
+    public function __construct(private QrFactory $qr) {}
+
+    public function __invoke(Table $table): PendingQr
+    {
+        abort_unless($this->qr->fits(route('menu', $table)), 422);
+
+        return $this->qr->url(route('menu', $table))->size(240);
+    }
+}
+```
+
+There are no action classes: QR encoding is stateless computation, which the manager serves
+directly.
 
 ### Payload catalogue
 
@@ -390,9 +438,9 @@ protected function casts(): array
 }
 ```
 
-`FitsInQrCode` checks with the settings `Qr::text()` encodes with: unset arguments take the
-configured level, maximum version, ECI policy and kanji switch (explicit arguments win), so it never
-passes text the encoder then rejects.
+`FitsInQrCode` is `Qr::fits()` as a validation rule: unset arguments take the configured level,
+maximum version, ECI policy and kanji switch (explicit arguments win), so it never passes text the
+encoder then rejects.
 
 `Iban::fromString()`, `Bic::fromString()` and `CreditorReference::fromString()/generate()` are
 available directly.
@@ -431,12 +479,20 @@ with them. Payment codes should stay square and black on white.
 composer test
 ```
 
-In your own tests, `RoundlyConsulting\Qr\Testing\MatrixDecoder` reads a generated matrix back:
+### No fake, by design
+
+`Qr` has no `fake()`. Encoding is pure and deterministic — the same input always yields the same
+symbol — and nothing is written, queued, mailed or sent (the optional SVG cache only memoises
+public output). Assert on the real output instead: `RoundlyConsulting\Qr\Testing\MatrixDecoder`
+reads a generated matrix back to its bytes, and `Qr::info()` / `Qr::fits()` expose the encoding
+decisions:
 
 ```php
 use RoundlyConsulting\Qr\Testing\MatrixDecoder;
 
-expect(MatrixDecoder::decode(Qr::otpauth($uri)->matrix())->bytes)->toBe($uri);
+expect(MatrixDecoder::decode(Qr::otpauth($uri)->matrix())->bytes)->toBe($uri)
+    ->and(Qr::info($uri)->version)->toBeLessThanOrEqual(10)
+    ->and(Qr::fits($uri, maxVersion: 10))->toBeTrue();
 ```
 
 ## Standards
