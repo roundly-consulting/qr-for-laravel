@@ -264,7 +264,7 @@ Qr::url('mailto:team@example.com', ['mailto']);         // opt in to other schem
 Qr::email('team@example.com', 'Hello', 'Body text');    // mailto:
 Qr::phone('+421 900 123 456');                          // tel:+421900123456
 Qr::sms('+421900123456', 'See you at 10', SmsFormat::Smsto);
-Qr::wifi('Clinic Guest', 'guest-password', WifiSecurity::Wpa);   // WPA, WEP, SAE (WPA3), None
+Qr::wifi('Clinic Guest', 'guest-password', WifiSecurity::Wpa);   // WPA (passphrase 8–63 bytes), WEP, SAE (WPA3), None
 Qr::make(Wifi::withHexKey('Clinic', $psk));             // raw hex key: 64-digit WPA PSK or 10/26/58-digit WEP key, unquoted
 Qr::vcard(new VCard(
     name: 'MVDr. Jana Nováková',                         // display name (FN)

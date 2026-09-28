@@ -16,8 +16,9 @@ use SensitiveParameter;
  * A Wi-Fi network configuration code (`WIFI:T:WPA;S:ssid;P:password;;`). Special
  * characters (`\ ; , : "`) are backslash-escaped and an all-hex value is quoted so readers
  * do not take it for a hex key. A raw hex key (a 64-digit WPA PSK or a 10/26/58-digit WEP
- * key) is written unquoted only when opted in with {@see self::withHexKey()}. Always a
- * secret: it carries the network password.
+ * key) is written unquoted only when opted in with {@see self::withHexKey()}. A WPA
+ * passphrase is 8 to 63 bytes (not characters). Always a secret: it carries the network
+ * password.
  */
 final readonly class Wifi implements Payload
 {
@@ -65,11 +66,12 @@ final readonly class Wifi implements Payload
             throw InvalidPayloadException::required('Wifi', 'password');
         }
 
-        if ($security === WifiSecurity::Wpa && mb_strlen($password) < 8) {
+        // WPA derives the key from the passphrase's bytes, and allows 8 to 63 of them.
+        if ($security === WifiSecurity::Wpa && strlen($password) < 8) {
             throw InvalidPayloadException::tooShort('Wifi', 'password', 8);
         }
 
-        if ($security === WifiSecurity::Wpa && mb_strlen($password) > 63) {
+        if ($security === WifiSecurity::Wpa && strlen($password) > 63) {
             throw InvalidPayloadException::tooLong('Wifi', 'password', 63);
         }
     }

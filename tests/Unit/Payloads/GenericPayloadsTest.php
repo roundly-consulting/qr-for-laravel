@@ -187,6 +187,14 @@ it('rejects raw hex keys of the wrong shape', function (Closure $build, string $
     'open' => [fn () => Wifi::withHexKey('Net', str_repeat('a', 64), WifiSecurity::None), 'mutually_exclusive'],
 ]);
 
+it('measures a WPA passphrase in bytes, 8 to 63', function (string $password): void {
+    expect((new Wifi('Net', $password))->toQrString())->toBe('WIFI:T:WPA;S:Net;P:'.$password.';;');
+})->with([
+    '8 bytes in 4 chars' => [str_repeat('ž', 4)],
+    '63 bytes in 32 chars' => [str_repeat('ž', 31).'a'],
+    '63 ascii' => [str_repeat('p', 63)],
+]);
+
 it('validates Wi-Fi credentials', function (Closure $build, string $reason): void {
     try {
         $build();
@@ -203,6 +211,8 @@ it('validates Wi-Fi credentials', function (Closure $build, string $reason): voi
     [fn () => new Wifi('Net'), 'required'],
     [fn () => new Wifi('Net', 'hunter'), 'too_short'],
     [fn () => new Wifi('Net', str_repeat('hunter', 11)), 'too_long'],
+    'wpa 64 bytes in 32 chars' => [fn () => new Wifi('Net', str_repeat('ž', 32)), 'too_long'],
+    'wpa 7 bytes in 4 chars' => [fn () => new Wifi('Net', 'žžža'), 'too_short'],
     [fn () => new Wifi('Net', 'hunter22', WifiSecurity::None), 'mutually_exclusive'],
 ]);
 
