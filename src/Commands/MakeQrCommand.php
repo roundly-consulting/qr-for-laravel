@@ -123,22 +123,31 @@ final class MakeQrCommand extends Command
     }
 
     /**
-     * Console argument types differ between Laravel majors; accept whatever arrives.
+     * Console argument types differ between Laravel majors, and `Artisan::call()` passes
+     * values through untouched; accept a number as well as a string.
      */
     private static function stringValue(mixed $value): string
     {
-        return is_string($value) ? $value : '';
+        return is_string($value) || is_int($value) || is_float($value) ? (string) $value : '';
     }
 
+    /**
+     * From the command line an option is a string; `Artisan::call()` may pass an int. Any
+     * other value is rejected rather than silently ignored.
+     */
     private function intOption(string $name): ?int
     {
         $value = $this->option($name);
 
-        if (! is_string($value) || $value === '') {
+        if ($value === null || $value === '') {
             return null;
         }
 
-        if (preg_match('/^-?\d+$/', $value) !== 1) {
+        if (is_int($value)) {
+            return $value;
+        }
+
+        if (! is_string($value) || preg_match('/^-?\d+$/', $value) !== 1) {
             throw new InvalidOptionException("The --{$name} option must be an integer.", InvalidOptionException::REASON_ERROR, $name);
         }
 

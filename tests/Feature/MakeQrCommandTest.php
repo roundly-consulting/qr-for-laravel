@@ -62,3 +62,33 @@ it('fails cleanly on invalid input', function (array $arguments): void {
     [['data' => str_repeat('x', 8000)]],
     [['data' => 'x', '--output' => '/nonexistent-dir/qr.svg']],
 ]);
+
+it('honours integer option values passed programmatically', function (): void {
+    Artisan::call('qr:make', ['data' => 'https://example.com', '--mask' => 3, '--min-version' => 4, '--max-version' => 6, '--info' => true]);
+    $info = Artisan::output();
+
+    Artisan::call('qr:make', ['data' => 'https://example.com', '--size' => 240, '--margin' => 0]);
+    $svg = Artisan::output();
+
+    expect($info)->toMatch('/Version\W+4\b/')
+        ->and($info)->toMatch('/Mask\W+3\b/')
+        ->and($info)->toContain('forced')
+        ->and($svg)->toContain('width="240"')
+        ->and($svg)->toContain('viewBox="0 0 25 25"'); // version 2 with --margin 0
+});
+
+it('encodes integer data passed programmatically', function (): void {
+    Artisan::call('qr:make', ['data' => 12345, '--info' => true]);
+
+    expect(Artisan::output())->toContain('numeric ×5');
+});
+
+it('rejects option values that are not integers', function (mixed $value): void {
+    $this->artisan('qr:make', ['data' => 'x', '--mask' => $value])
+        ->expectsOutputToContain('The --mask option must be an integer.')
+        ->assertFailed();
+})->with([
+    'float' => [3.5],
+    'array' => [[3]],
+    'signed text' => ['+3'],
+]);
