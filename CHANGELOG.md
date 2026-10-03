@@ -6,6 +6,8 @@ All notable changes to `qr-for-laravel` are documented in this file. The format 
 
 ## Unreleased
 
+## 1.0.0 - 2026-10-03
+
 Initial public release.
 
 ### Added
