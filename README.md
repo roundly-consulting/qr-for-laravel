@@ -132,15 +132,18 @@ return [
 | `response.max_age` / `response.immutable` | `86400` / `false` | — | `Cache-Control` for public and personal codes. |
 | `memo.entries` | `64` | — | In-process LRU of encoded matrices (public payloads only); `0` disables. |
 | `cache.enabled` / `.store` / `.ttl` / `.prefix` | `false` / `null` / `86400` / `qr` | `QR_CACHE`, `QR_CACHE_STORE` | Cache rendered SVG of public payloads in a Laravel cache store (`null` = default store). |
-| `blade.component` | `qr-code` | — | Component alias (`<x-qr-code>`); `null` or `''` disables it. |
+| `blade.component` | `qr-code` | — | Component alias (`<x-qr-code>`); `null` or blank (not set) disables it. |
 | `payments.epc.version` | `002` | `QR_EPC_VERSION` | EPC069-12 version: `001` (BIC mandatory) or `002` (BIC optional for EEA IBANs). |
 | `payments.epc.charset` | `utf-8` | — | `utf-8`, `iso-8859-1`, `-2`, `-4`, `-5`, `-7`, `-10`, `-15`. |
 | `payments.epc.strict_charset` | `false` | — | Restrict EPC text to the SEPA Latin subset `A–Z a–z 0–9 / - ? : ( ) . , ' +` and space. |
 | `payments.bysquare.version` | `1.2.0` | `QR_BYSQUARE_VERSION` | `1.0.0`, `1.1.0` or `1.2.0` (beneficiary name mandatory). |
 | `payments.bysquare.deburr` | `true` | `QR_BYSQUARE_DEBURR` | Strip diacritics from the note and beneficiary fields. |
 
-A misconfigured key throws `InvalidQrConfigException` naming the key. `php artisan about`
-shows a `Qr` section with the effective settings (never the cache store's name).
+A key that is not set — absent, `null` or blank (`''` or whitespace, such as a `QR_ECI=` line in
+`.env`) — takes the default above; for `mask`, `svg.size`, `svg.finder_color`, `cache.store` and
+`blade.component` not set is the same as `null`. A misconfigured key — a typo such as
+`QR_ECI=sometimes` — throws `InvalidQrConfigException` naming the key. `php artisan about` shows a
+`Qr` section with the effective settings (never the cache store's name).
 
 ## Usage
 

@@ -14,6 +14,9 @@ return [
     | window (1..40), a forced mask (0..7, or null = lowest ISO penalty), the
     | ECI 26 (UTF-8) policy and whether kanji segments may be used.
     |
+    | A blank value (KEY=) is not set, so the default applies; a typo throws
+    | an InvalidQrConfigException naming the key.
+    |
     */
 
     'error_correction' => env('QR_ERROR_CORRECTION', 'M'),
@@ -97,8 +100,8 @@ return [
     | Blade
     |--------------------------------------------------------------------------
     |
-    | The component alias (`qr-code` registers <x-qr-code>). Null or an empty
-    | string disables the registration.
+    | The component alias (`qr-code` registers <x-qr-code>). Null or a blank
+    | string (not set) disables the registration.
     |
     */
 
