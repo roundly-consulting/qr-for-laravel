@@ -130,3 +130,36 @@ it('reports the offending key on the exception', function (): void {
 
     $this->fail('expected an exception');
 });
+
+it('refuses a junk integer string instead of casting it (strict config)', function (string $key, mixed $value, Closure $read): void {
+    config([$key => $value]);
+
+    expect($read)->toThrow(InvalidQrConfigException::class, $key);
+})->with([
+    ['qr.versions.min', 'five', fn () => ConfigGuard::minVersion()],
+    ['qr.versions.max', '40.0', fn () => ConfigGuard::maxVersion()],
+    ['qr.mask', '5.5', fn () => ConfigGuard::mask()],
+    ['qr.mask', '', fn () => ConfigGuard::mask()],
+    ['qr.svg.size', '1e3', fn () => ConfigGuard::svgSize()],
+    ['qr.svg.size', true, fn () => ConfigGuard::svgSize()],
+    ['qr.svg.margin', '', fn () => ConfigGuard::svgMargin()],
+    ['qr.response.max_age', 'day', fn () => ConfigGuard::responseMaxAge()],
+    ['qr.memo.entries', '64abc', fn () => ConfigGuard::memoEntries()],
+    ['qr.cache.ttl', 'five', fn () => ConfigGuard::cacheTtl()],
+]);
+
+it('reads canonical integer strings from env (strict config)', function (): void {
+    config([
+        'qr.versions.min' => '2',
+        'qr.versions.max' => '30',
+        'qr.svg.size' => '512',
+        'qr.svg.margin' => '0',
+        'qr.cache.ttl' => '60',
+    ]);
+
+    expect(ConfigGuard::minVersion())->toBe(2)
+        ->and(ConfigGuard::maxVersion())->toBe(30)
+        ->and(ConfigGuard::svgSize())->toBe(512)
+        ->and(ConfigGuard::svgMargin())->toBe(0)
+        ->and(ConfigGuard::cacheTtl())->toBe(60);
+});
