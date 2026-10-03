@@ -37,9 +37,9 @@ final class ConfigGuard
 
     public static function minVersion(): int
     {
-        $min = self::validator()->intBetween('qr.versions.min', 1, 40, 1);
+        $min = self::validator()->integer('qr.versions.min', 1, min: 1, max: 40);
 
-        if ($min > self::validator()->intBetween('qr.versions.max', 1, 40, 40)) {
+        if ($min > self::validator()->integer('qr.versions.max', 40, min: 1, max: 40)) {
             throw InvalidQrConfigException::invalid('qr.versions.min', 'must not exceed qr.versions.max');
         }
 
@@ -48,7 +48,7 @@ final class ConfigGuard
 
     public static function maxVersion(): int
     {
-        return self::validator()->intBetween('qr.versions.max', self::minVersion(), 40, 40);
+        return self::validator()->integer('qr.versions.max', 40, min: self::minVersion(), max: 40);
     }
 
     public static function mask(): ?int
@@ -73,7 +73,7 @@ final class ConfigGuard
 
     public static function svgMargin(): int
     {
-        return self::validator()->intBetween('qr.svg.margin', 0, 64, 4);
+        return self::validator()->integer('qr.svg.margin', 4, min: 0, max: 64);
     }
 
     public static function svgForeground(): Color
@@ -125,7 +125,7 @@ final class ConfigGuard
 
     public static function responseMaxAge(): int
     {
-        return self::validator()->intBetween('qr.response.max_age', 0, 31536000, 86400);
+        return self::validator()->integer('qr.response.max_age', 86400, min: 0, max: 31536000);
     }
 
     public static function responseImmutable(): bool
@@ -135,7 +135,7 @@ final class ConfigGuard
 
     public static function memoEntries(): int
     {
-        return self::validator()->intBetween('qr.memo.entries', 0, 100000, 64);
+        return self::validator()->integer('qr.memo.entries', 64, min: 0, max: 100000);
     }
 
     public static function cacheEnabled(): bool
@@ -160,7 +160,7 @@ final class ConfigGuard
 
     public static function cacheTtl(): int
     {
-        return self::validator()->intBetween('qr.cache.ttl', 1, 31536000, 86400);
+        return self::validator()->integer('qr.cache.ttl', 86400, min: 1, max: 31536000);
     }
 
     public static function cachePrefix(): string

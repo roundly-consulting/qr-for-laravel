@@ -7,7 +7,7 @@ declare(strict_types=1);
  * shipped leaf is read.
  *
  * `extraReadPrefixes` because ConfigGuard reads most keys through the toolkit validator
- * (`Config::using(...)->intBetween('qr.versions.min', ...)`), which the token scraper does
+ * (`Config::using(...)->integer('qr.versions.min', ...)`), which the token scraper does
  * not recognise as a `config()` call. `AboutSection.php` is excluded from the reverse
  * direction: rendering a key is not reading it, so every key must be proven by ConfigGuard.
  */
