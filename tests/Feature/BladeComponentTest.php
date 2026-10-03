@@ -38,13 +38,19 @@ it('never compiles generated markup as Blade', function (): void {
         ->and($html)->not->toContain('49')
         ->and($html)->not->toContain('<script>');
 
-    // A different code with a different title through the same template compiles nothing new.
-    $views = storage_path('framework/views');
-    $before = count(glob($views.'/*') ?: []);
+    // A different code with a different title through the same template compiles nothing new:
+    // no compiled view holds the second title. Found by a unique marker, not a file count — the
+    // compiled-views directory is shared with every parallel process.
+    $marker = 'marker-'.bin2hex(random_bytes(8));
 
-    Blade::render($template, ['data' => 'second', 'title' => $hostile.' 2']);
+    Blade::render($template, ['data' => 'second', 'title' => $hostile.' '.$marker]);
 
-    expect(count(glob($views.'/*') ?: []))->toBe($before);
+    $holding = array_filter(
+        glob(storage_path('framework/views').'/*') ?: [],
+        static fn (string $path): bool => str_contains((string) @file_get_contents($path), $marker),
+    );
+
+    expect($holding)->toBe([]);
 });
 
 it('returns a deferred Htmlable from render()', function (): void {
