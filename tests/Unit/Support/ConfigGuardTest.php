@@ -97,10 +97,9 @@ it('rejects invalid values naming the key', function (string $key, mixed $value,
     ['qr.svg.finder_color', 'url(#x)', fn () => ConfigGuard::finderColor()],
     ['qr.response.max_age', -1, fn () => ConfigGuard::responseMaxAge()],
     ['qr.memo.entries', -1, fn () => ConfigGuard::memoEntries()],
-    ['qr.cache.store', '  ', fn () => ConfigGuard::cacheStore()],
     ['qr.cache.store', 5, fn () => ConfigGuard::cacheStore()],
     ['qr.cache.ttl', 0, fn () => ConfigGuard::cacheTtl()],
-    ['qr.cache.prefix', '', fn () => ConfigGuard::cachePrefix()],
+    ['qr.cache.prefix', ['qr'], fn () => ConfigGuard::cachePrefix()],
     ['qr.blade.component', '<script>', fn () => ConfigGuard::bladeComponent()],
     ['qr.blade.component', 5, fn () => ConfigGuard::bladeComponent()],
     ['qr.payments.epc.version', '003', fn () => ConfigGuard::epcVersion()],
@@ -139,10 +138,9 @@ it('refuses a junk integer string instead of casting it (strict config)', functi
     ['qr.versions.min', 'five', fn () => ConfigGuard::minVersion()],
     ['qr.versions.max', '40.0', fn () => ConfigGuard::maxVersion()],
     ['qr.mask', '5.5', fn () => ConfigGuard::mask()],
-    ['qr.mask', '', fn () => ConfigGuard::mask()],
     ['qr.svg.size', '1e3', fn () => ConfigGuard::svgSize()],
     ['qr.svg.size', true, fn () => ConfigGuard::svgSize()],
-    ['qr.svg.margin', '', fn () => ConfigGuard::svgMargin()],
+    ['qr.svg.margin', 'four', fn () => ConfigGuard::svgMargin()],
     ['qr.response.max_age', 'day', fn () => ConfigGuard::responseMaxAge()],
     ['qr.memo.entries', '64abc', fn () => ConfigGuard::memoEntries()],
     ['qr.cache.ttl', 'five', fn () => ConfigGuard::cacheTtl()],
@@ -163,3 +161,62 @@ it('reads canonical integer strings from env (strict config)', function (): void
         ->and(ConfigGuard::svgMargin())->toBe(0)
         ->and(ConfigGuard::cacheTtl())->toBe(60);
 });
+
+it('reads a blank value as not set, so the documented default applies (strict config)', function (string $blank): void {
+    foreach ([
+        'qr.error_correction', 'qr.boost_error_correction', 'qr.versions.min', 'qr.versions.max', 'qr.mask',
+        'qr.eci', 'qr.kanji', 'qr.svg.size', 'qr.svg.margin', 'qr.svg.foreground', 'qr.svg.background',
+        'qr.svg.module_style', 'qr.svg.module_radius', 'qr.svg.finder_style', 'qr.svg.finder_color',
+        'qr.svg.xml_declaration', 'qr.response.max_age', 'qr.response.immutable', 'qr.memo.entries',
+        'qr.cache.enabled', 'qr.cache.store', 'qr.cache.ttl', 'qr.cache.prefix', 'qr.blade.component',
+        'qr.payments.epc.version', 'qr.payments.epc.charset', 'qr.payments.epc.strict_charset',
+        'qr.payments.bysquare.version', 'qr.payments.bysquare.deburr',
+    ] as $key) {
+        config([$key => $blank]);
+    }
+
+    expect(ConfigGuard::errorCorrection())->toBe(ErrorCorrection::Medium)
+        ->and(ConfigGuard::boostErrorCorrection())->toBeTrue()
+        ->and(ConfigGuard::minVersion())->toBe(1)
+        ->and(ConfigGuard::maxVersion())->toBe(40)
+        ->and(ConfigGuard::mask())->toBeNull()
+        ->and(ConfigGuard::eci())->toBe(EciMode::Auto)
+        ->and(ConfigGuard::kanji())->toBeFalse()
+        ->and(ConfigGuard::svgSize())->toBeNull()
+        ->and(ConfigGuard::svgMargin())->toBe(4)
+        ->and(ConfigGuard::svgForeground()->toSvg())->toBe('#000000')
+        ->and(ConfigGuard::svgBackground()->toSvg())->toBe('#ffffff')
+        ->and(ConfigGuard::moduleStyle())->toBe(ModuleStyle::Square)
+        ->and(ConfigGuard::moduleRadius())->toBe(0.5)
+        ->and(ConfigGuard::finderStyle())->toBe(FinderStyle::Square)
+        ->and(ConfigGuard::finderColor())->toBeNull()
+        ->and(ConfigGuard::xmlDeclaration())->toBeFalse()
+        ->and(ConfigGuard::responseMaxAge())->toBe(86400)
+        ->and(ConfigGuard::responseImmutable())->toBeFalse()
+        ->and(ConfigGuard::memoEntries())->toBe(64)
+        ->and(ConfigGuard::cacheEnabled())->toBeFalse()
+        ->and(ConfigGuard::cacheStore())->toBeNull()
+        ->and(ConfigGuard::cacheTtl())->toBe(86400)
+        ->and(ConfigGuard::cachePrefix())->toBe('qr')
+        ->and(ConfigGuard::bladeComponent())->toBeNull()
+        ->and(ConfigGuard::epcVersion())->toBe(EpcVersion::V002)
+        ->and(ConfigGuard::epcCharset())->toBe(EpcCharset::Utf8)
+        ->and(ConfigGuard::epcStrictCharset())->toBeFalse()
+        ->and(ConfigGuard::bySquareVersion())->toBe(BySquareVersion::V1_2_0)
+        ->and(ConfigGuard::bySquareDeburr())->toBeTrue();
+})->with(['empty' => '', 'whitespace' => '  ']);
+
+it('still refuses junk once blank reads as not set (strict config)', function (string $key, mixed $value, Closure $read): void {
+    config([$key => $value]);
+
+    expect($read)->toThrow(InvalidQrConfigException::class, $key);
+})->with([
+    ['qr.error_correction', 'medium-ish', fn () => ConfigGuard::errorCorrection()],
+    ['qr.eci', 'Auto', fn () => ConfigGuard::eci()],
+    ['qr.svg.foreground', 'blak', fn () => ConfigGuard::svgForeground()],
+    ['qr.svg.finder_color', 'blak', fn () => ConfigGuard::finderColor()],
+    ['qr.svg.module_radius', 'half', fn () => ConfigGuard::moduleRadius()],
+    ['qr.blade.component', 'qr code', fn () => ConfigGuard::bladeComponent()],
+    ['qr.payments.epc.version', '2', fn () => ConfigGuard::epcVersion()],
+    ['qr.payments.bysquare.version', '1.2', fn () => ConfigGuard::bySquareVersion()],
+]);

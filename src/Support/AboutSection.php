@@ -27,12 +27,12 @@ final class AboutSection
                 self::onOff(config('qr.boost_error_correction'), true),
             ),
             'Versions' => sprintf('%s–%s', self::text(config('qr.versions.min'), '1'), self::text(config('qr.versions.max'), '40')),
-            'Mask' => config('qr.mask') === null ? 'auto' : self::text(config('qr.mask'), 'auto'),
+            'Mask' => self::text(config('qr.mask'), 'auto'),
             'ECI' => self::text(config('qr.eci'), 'auto'),
             'Kanji' => self::onOff(config('qr.kanji'), false),
             'SVG' => sprintf(
                 '%s, margin %s, %s/%s',
-                config('qr.svg.size') === null ? 'responsive' : self::text(config('qr.svg.size'), '256').'px',
+                ConfigGuard::blank(config('qr.svg.size')) ? 'responsive' : self::text(config('qr.svg.size'), '256').'px',
                 self::text(config('qr.svg.margin'), '4'),
                 self::text(config('qr.svg.module_style'), 'square'),
                 self::text(config('qr.svg.finder_style'), 'square'),
@@ -68,7 +68,7 @@ final class AboutSection
 
         return sprintf(
             'ON (%s) %ss',
-            config('qr.cache.store') === null ? 'default store' : 'custom store',
+            ConfigGuard::blank(config('qr.cache.store')) ? 'default store' : 'custom store',
             self::text(config('qr.cache.ttl'), '86400'),
         );
     }
@@ -77,17 +77,18 @@ final class AboutSection
     {
         $component = config('qr.blade.component');
 
-        return is_string($component) && $component !== '' ? '<x-'.$component.'>' : 'OFF';
+        return is_string($component) && ! ConfigGuard::blank($component) ? '<x-'.$component.'>' : 'OFF';
     }
 
+    /** The value as shown; not set (null or blank) shows the default. */
     private static function text(mixed $value, string $default): string
     {
-        return is_scalar($value) && ! is_bool($value) ? (string) $value : $default;
+        return is_scalar($value) && ! is_bool($value) && ! ConfigGuard::blank($value) ? (string) $value : $default;
     }
 
     private static function onOff(mixed $value, bool $default): string
     {
-        $flag = $value === null ? $default : (filter_var($value, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? $default);
+        $flag = ConfigGuard::blank($value) ? $default : (filter_var($value, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? $default);
 
         return $flag ? 'ON' : 'OFF';
     }

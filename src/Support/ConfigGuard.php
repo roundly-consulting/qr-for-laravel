@@ -18,8 +18,9 @@ use RoundlyConsulting\Qr\Exceptions\InvalidQrConfigException;
 use RoundlyConsulting\Qr\ValueObjects\Color;
 
 /**
- * Typed, validated reads of `config/qr.php`. A misconfigured key throws
- * {@see InvalidQrConfigException} naming the key — never its value.
+ * Typed, validated reads of `config/qr.php`. A key that is not set — absent, null or blank
+ * (`''` or whitespace, a host's `KEY=`) — takes its documented default; a misconfigured key
+ * throws {@see InvalidQrConfigException} naming the key — never its value.
  *
  * @internal
  */
@@ -27,7 +28,9 @@ final class ConfigGuard
 {
     public static function errorCorrection(): ErrorCorrection
     {
-        return ErrorCorrection::fromConfig(config('qr.error_correction'));
+        $value = config('qr.error_correction');
+
+        return self::blank($value) ? ErrorCorrection::Medium : ErrorCorrection::fromConfig($value);
     }
 
     public static function boostErrorCorrection(): bool
@@ -58,7 +61,7 @@ final class ConfigGuard
 
     public static function eci(): EciMode
     {
-        return self::validator()->enum('qr.eci', EciMode::class);
+        return self::validator()->enum('qr.eci', EciMode::class, EciMode::Auto);
     }
 
     public static function kanji(): bool
@@ -78,22 +81,22 @@ final class ConfigGuard
 
     public static function svgForeground(): Color
     {
-        return self::color('qr.svg.foreground', config('qr.svg.foreground', '#000000'));
+        return self::color('qr.svg.foreground', self::orDefault(config('qr.svg.foreground'), '#000000'));
     }
 
     public static function svgBackground(): Color
     {
-        return self::color('qr.svg.background', config('qr.svg.background', '#ffffff'));
+        return self::color('qr.svg.background', self::orDefault(config('qr.svg.background'), '#ffffff'));
     }
 
     public static function moduleStyle(): ModuleStyle
     {
-        return self::validator()->enum('qr.svg.module_style', ModuleStyle::class);
+        return self::validator()->enum('qr.svg.module_style', ModuleStyle::class, ModuleStyle::Square);
     }
 
     public static function moduleRadius(): float
     {
-        $radius = config('qr.svg.module_radius', 0.5);
+        $radius = self::orDefault(config('qr.svg.module_radius'), 0.5);
 
         if (is_string($radius) && is_numeric($radius)) {
             $radius = (float) $radius;
@@ -108,14 +111,14 @@ final class ConfigGuard
 
     public static function finderStyle(): FinderStyle
     {
-        return self::validator()->enum('qr.svg.finder_style', FinderStyle::class);
+        return self::validator()->enum('qr.svg.finder_style', FinderStyle::class, FinderStyle::Square);
     }
 
     public static function finderColor(): ?Color
     {
         $value = config('qr.svg.finder_color');
 
-        return $value === null ? null : self::color('qr.svg.finder_color', $value);
+        return self::blank($value) ? null : self::color('qr.svg.finder_color', $value);
     }
 
     public static function xmlDeclaration(): bool
@@ -147,12 +150,12 @@ final class ConfigGuard
     {
         $store = config('qr.cache.store');
 
-        if ($store === null) {
+        if (self::blank($store)) {
             return null;
         }
 
-        if (! is_string($store) || trim($store) === '') {
-            throw InvalidQrConfigException::invalid('qr.cache.store', 'expected null or a non-empty store name');
+        if (! is_string($store)) {
+            throw InvalidQrConfigException::invalid('qr.cache.store', 'expected null or a store name');
         }
 
         return $store;
@@ -165,14 +168,15 @@ final class ConfigGuard
 
     public static function cachePrefix(): string
     {
-        return self::validator()->requireString('qr.cache.prefix');
+        return self::blank(config('qr.cache.prefix')) ? 'qr' : self::validator()->requireString('qr.cache.prefix');
     }
 
     public static function bladeComponent(): ?string
     {
         $component = config('qr.blade.component');
 
-        if ($component === null || $component === '') {
+        // Not set — null or blank — means no component.
+        if (self::blank($component)) {
             return null;
         }
 
@@ -185,12 +189,12 @@ final class ConfigGuard
 
     public static function epcVersion(): EpcVersion
     {
-        return self::validator()->enum('qr.payments.epc.version', EpcVersion::class);
+        return self::validator()->enum('qr.payments.epc.version', EpcVersion::class, EpcVersion::V002);
     }
 
     public static function epcCharset(): EpcCharset
     {
-        return self::validator()->enum('qr.payments.epc.charset', EpcCharset::class);
+        return self::validator()->enum('qr.payments.epc.charset', EpcCharset::class, EpcCharset::Utf8);
     }
 
     public static function epcStrictCharset(): bool
@@ -204,6 +208,10 @@ final class ConfigGuard
 
         if ($version instanceof BySquareVersion) {
             return $version;
+        }
+
+        if (self::blank($version)) {
+            return BySquareVersion::V1_2_0;
         }
 
         return (is_string($version) ? BySquareVersion::tryFromSemver($version) : null)
@@ -220,11 +228,22 @@ final class ConfigGuard
         return Config::using(InvalidQrConfigException::class);
     }
 
+    /** Not set: absent, null or a blank string (`''` or whitespace — a host's `KEY=`). */
+    public static function blank(mixed $value): bool
+    {
+        return $value === null || (is_string($value) && trim($value) === '');
+    }
+
+    private static function orDefault(mixed $value, mixed $default): mixed
+    {
+        return self::blank($value) ? $default : $value;
+    }
+
     private static function nullableIntBetween(string $key, int $min, int $max): ?int
     {
         $value = config($key);
 
-        if ($value === null) {
+        if (self::blank($value)) {
             return null;
         }
 

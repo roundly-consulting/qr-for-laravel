@@ -56,3 +56,30 @@ it('still renders on a misconfigured host', function (): void {
 
     expect(qrAbout())->toContain('M, boost ON')->toContain('1–40')->toContain('margin 4');
 });
+
+it('reports blank settings as their defaults, the way the readers see them', function (): void {
+    config([
+        'qr.error_correction' => '',
+        'qr.boost_error_correction' => '',
+        'qr.mask' => ' ',
+        'qr.eci' => '',
+        'qr.svg.size' => '',
+        'qr.svg.margin' => '',
+        'qr.cache.enabled' => '',
+        'qr.blade.component' => '  ',
+        'qr.payments.bysquare.deburr' => '',
+    ]);
+
+    expect(qrAbout())
+        ->toContain('M, boost ON')
+        ->toContain('responsive, margin 4')
+        ->toContain('1.2.0, deburr ON')
+        ->toMatch('/Mask\s*\.*\s*auto/')
+        ->toMatch('/ECI\s*\.*\s*auto/')
+        ->toMatch('/Cache\s*\.*\s*OFF/')
+        ->toMatch('/Blade component\s*\.*\s*OFF/');
+
+    config(['qr.cache.enabled' => true, 'qr.cache.store' => ' ']);
+
+    expect(qrAbout())->toContain('ON (default store) 86400s');
+});
