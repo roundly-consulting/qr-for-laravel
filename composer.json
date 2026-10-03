@@ -25,68 +25,6 @@
             "role": "Developer"
         }
     ],
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../package-toolkit-for-laravel*",
-            "options": {
-                "symlink": true
-            }
-        },
-        {
-            "type": "vcs",
-            "url": "https://github.com/roundly-consulting/package-toolkit-for-laravel",
-            "no-api": true
-        },
-        {
-            "type": "path",
-            "url": "../crypto-for-laravel*",
-            "options": {
-                "symlink": true
-            }
-        },
-        {
-            "type": "vcs",
-            "url": "https://github.com/roundly-consulting/crypto-for-laravel",
-            "no-api": true
-        },
-        {
-            "type": "path",
-            "url": "../enums-for-laravel*",
-            "options": {
-                "symlink": true
-            }
-        },
-        {
-            "type": "vcs",
-            "url": "https://github.com/roundly-consulting/enums-for-laravel",
-            "no-api": true
-        },
-        {
-            "type": "path",
-            "url": "../money-for-laravel*",
-            "options": {
-                "symlink": true
-            }
-        },
-        {
-            "type": "vcs",
-            "url": "https://github.com/roundly-consulting/money-for-laravel",
-            "no-api": true
-        },
-        {
-            "type": "path",
-            "url": "../testing-for-laravel*",
-            "options": {
-                "symlink": true
-            }
-        },
-        {
-            "type": "vcs",
-            "url": "https://github.com/roundly-consulting/testing-for-laravel",
-            "no-api": true
-        }
-    ],
     "require": {
         "php": "^8.4",
         "ext-bcmath": "*",
@@ -97,10 +35,10 @@
         "illuminate/http": "^12.0|^13.0",
         "illuminate/support": "^12.0|^13.0",
         "illuminate/view": "^12.0|^13.0",
-        "roundly-consulting/crypto-for-laravel": "@dev",
-        "roundly-consulting/enums-for-laravel": "@dev",
-        "roundly-consulting/money-for-laravel": "@dev",
-        "roundly-consulting/package-toolkit-for-laravel": "@dev"
+        "roundly-consulting/crypto-for-laravel": "^1.0",
+        "roundly-consulting/enums-for-laravel": "^1.0",
+        "roundly-consulting/money-for-laravel": "^1.0",
+        "roundly-consulting/package-toolkit-for-laravel": "^1.0"
     },
     "require-dev": {
         "ext-dom": "*",
@@ -112,7 +50,7 @@
         "pestphp/pest-plugin-arch": "^4.0",
         "pestphp/pest-plugin-laravel": "^4.0",
         "phpstan/extension-installer": "^1.4",
-        "roundly-consulting/testing-for-laravel": "@dev"
+        "roundly-consulting/testing-for-laravel": "^1.0"
     },
     "suggest": {
         "ext-intl": "NFC-normalises payment text (EPC/PAY by square) before length checks via \\Normalizer; without it text is encoded exactly as given."
@@ -150,7 +88,5 @@
                 "Qr": "RoundlyConsulting\\Qr\\Facades\\Qr"
             }
         }
-    },
-    "minimum-stability": "dev",
-    "prefer-stable": true
+    }
 }
