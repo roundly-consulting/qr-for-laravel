@@ -48,7 +48,7 @@ return [
         'radius' => 'Polomer zaoblenia modulu musí byť väčší ako 0 a najviac 0,5.',
         'attribute' => 'Tento atribút nie je pri QR kóde povolený.',
         'error_correction' => 'Úroveň korekcie chýb musí byť L, M, Q alebo H.',
-        'locked_by_payload' => 'Možnosť :field je pevne určená platobným štandardom.',
+        'locked_by_payload' => 'Možnosť :field je pevne určená týmto typom obsahu.',
         'out_of_bounds' => 'Modul leží mimo QR kódu.',
         'eci' => 'Identifikátor ECI musí byť od 0 do 999999.',
         'render_as' => 'QR kód je možné vykresliť ako „svg“ alebo „img“.',

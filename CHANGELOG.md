@@ -6,6 +6,10 @@ All notable changes to `qr-for-laravel` are documented in this file. The format 
 
 ## Unreleased
 
+### Fixed
+
+- The `qr::qr.errors.locked_by_payload` message no longer blames "the payment standard" when the locked option comes from a non-payment payload (for example `sensitivity` on an otpauth 2FA seed); it now reads "The :field option is fixed by this content type." in English and Slovak.
+
 ## 1.0.1 - 2026-10-04
 
 ### Changed

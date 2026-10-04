@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
+use RoundlyConsulting\Qr\Enums\EciMode;
 use RoundlyConsulting\Qr\Enums\Sensitivity;
 use RoundlyConsulting\Qr\Enums\WifiSecurity;
 use RoundlyConsulting\Qr\Exceptions\InvalidOptionException;
 use RoundlyConsulting\Qr\Facades\Qr;
+use RoundlyConsulting\Qr\Payloads\Payments\Epc\EpcPayment;
 use RoundlyConsulting\Qr\Payloads\Text;
 use RoundlyConsulting\Qr\Support\MatrixMemo;
 
@@ -56,3 +58,24 @@ it('keeps a 2FA seed sent through Qr::url out of the memo, the SVG cache and sha
         ->and($memo->count())->toBe(0)
         ->and((new ReflectionProperty($store, 'storage'))->getValue($store))->toBe([]);
 });
+
+it('explains a locked option in words that fit every content type', function (string $locale, Closure $build, string $message): void {
+    app()->setLocale($locale);
+
+    try {
+        $build();
+    } catch (InvalidOptionException $exception) {
+        expect($exception->reason)->toBe('locked_by_payload')
+            ->and(__('qr::qr.errors.'.$exception->reason, ['field' => $exception->field]))->toBe($message);
+
+        return;
+    }
+
+    test()->fail('The locked option was not refused.');
+})->with([
+    'en, otpauth' => ['en', fn () => Qr::otpauth('otpauth://totp/A:b?secret=JBSWY3DP')->sensitivity(Sensitivity::Public)->svg(), 'The sensitivity option is fixed by this content type.'],
+    'en, otpauth text' => ['en', fn () => Qr::text('otpauth://totp/A:b?secret=JBSWY3DP')->sensitivity(Sensitivity::Personal)->matrix(), 'The sensitivity option is fixed by this content type.'],
+    'en, payment' => ['en', fn () => Qr::epc(new EpcPayment('Jana', 'SK9611000000002918599669', 'TATRSKBX'))->eci(EciMode::Always)->matrix(), 'The eci option is fixed by this content type.'],
+    'sk, otpauth' => ['sk', fn () => Qr::otpauth('otpauth://totp/A:b?secret=JBSWY3DP')->sensitivity(Sensitivity::Public)->svg(), 'Možnosť sensitivity je pevne určená týmto typom obsahu.'],
+    'sk, otpauth url' => ['sk', fn () => Qr::url('otpauth://totp/A:b?secret=JBSWY3DP', ['otpauth'])->sensitivity(Sensitivity::Public)->svg(), 'Možnosť sensitivity je pevne určená týmto typom obsahu.'],
+]);

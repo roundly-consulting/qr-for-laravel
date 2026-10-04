@@ -48,7 +48,7 @@ return [
         'radius' => 'The module radius must be greater than 0 and at most 0.5.',
         'attribute' => 'This attribute is not allowed on a QR code.',
         'error_correction' => 'The error correction level must be L, M, Q or H.',
-        'locked_by_payload' => 'The :field option is fixed by the payment standard.',
+        'locked_by_payload' => 'The :field option is fixed by this content type.',
         'out_of_bounds' => 'The module is outside the QR code.',
         'eci' => 'The ECI designator must be between 0 and 999999.',
         'render_as' => 'A QR code can be rendered as "svg" or "img".',
