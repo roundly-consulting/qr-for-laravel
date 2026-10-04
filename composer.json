@@ -16,7 +16,7 @@
         "bysquare",
         "iban"
     ],
-    "homepage": "https://github.com/roundly-consulting/qr-for-laravel",
+    "homepage": "https://roundly-consulting.com/open-source/docs/qr-for-laravel",
     "license": "MIT",
     "authors": [
         {
@@ -25,6 +25,9 @@
             "role": "Developer"
         }
     ],
+    "support": {
+        "docs": "https://roundly-consulting.com/open-source/docs/qr-for-laravel"
+    },
     "require": {
         "php": "^8.4",
         "ext-bcmath": "*",
