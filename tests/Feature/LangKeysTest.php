@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+use Illuminate\Support\Arr;
+use RoundlyConsulting\Qr\Exceptions\InvalidColorException;
+use RoundlyConsulting\Qr\Facades\Qr;
+
 /**
  * Every exception `$reason` key has a user-facing `qr::qr.errors.*` translation, and every
  * translation belongs to a reason some exception can carry.
@@ -37,4 +41,25 @@ it('ships a description for every payload type', function (): void {
     expect(array_keys(trans('qr::qr.descriptions')))->toBe([
         'text', 'url', 'email', 'phone', 'sms', 'wifi', 'vcard', 'geo', 'otpauth', 'epc', 'bysquare',
     ])->and(trans('qr::qr.title'))->toBe('QR code');
+});
+
+it('explains a refused color in end-user words', function (string $locale, string $message): void {
+    app()->setLocale($locale);
+
+    try {
+        Qr::text('x')->foreground('red" onload="x');
+    } catch (InvalidColorException $exception) {
+        expect(__('qr::qr.errors.'.$exception->reason, ['field' => $exception->field]))->toBe($message);
+
+        return;
+    }
+
+    test()->fail('The color was not refused.');
+})->with([
+    'en' => ['en', 'The foreground color is not allowed.'],
+    'sk' => ['sk', 'Farba foreground nie je povolená.'],
+]);
+
+it('spells color the American way in every english line', function (): void {
+    expect(implode("\n", Arr::flatten(trans('qr::qr', [], 'en'))))->not->toContain('colour');
 });

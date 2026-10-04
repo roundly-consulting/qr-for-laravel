@@ -52,7 +52,7 @@ return [
         'out_of_bounds' => 'The module is outside the QR code.',
         'eci' => 'The ECI designator must be between 0 and 999999.',
         'render_as' => 'A QR code can be rendered as "svg" or "img".',
-        'color' => 'The :field colour is not allowed.',
+        'color' => 'The :field color is not allowed.',
         'unencodable_character' => 'The content contains a character the chosen mode cannot encode.',
         'required' => 'The :field field is required.',
         'too_long' => 'The :field field is too long.',
