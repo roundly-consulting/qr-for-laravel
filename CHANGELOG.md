@@ -6,6 +6,10 @@ All notable changes to `qr-for-laravel` are documented in this file. The format 
 
 ## Unreleased
 
+### Fixed
+
+- `EpcPayment` now rejects a `purpose` code with a trailing newline (`"GDDS\n"`); before, the newline shifted the creditor reference onto the unstructured-text line of the payment code.
+
 ## 1.0.2 - 2026-10-04
 
 ### Fixed

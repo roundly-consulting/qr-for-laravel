@@ -92,7 +92,7 @@ final readonly class EpcPayment implements Payload
             }
         }
 
-        if ($purpose !== null && preg_match('/^[A-Z0-9]{1,4}$/', $purpose) !== 1) {
+        if ($purpose !== null && preg_match('/^[A-Z0-9]{1,4}\z/', $purpose) !== 1) {
             throw InvalidPayloadException::invalidFormat(self::TYPE, 'purpose');
         }
 

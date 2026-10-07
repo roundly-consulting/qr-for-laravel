@@ -226,3 +226,15 @@ it('applies configured defaults through the manager only, as documented', functi
     expect(explode("\n", Qr::epc($payment)->payload()->toQrString())[1])->toBe('001')
         ->and(explode("\n", $payment->toQrString())[1])->toBe('002');
 });
+
+it('rejects a purpose code with a trailing newline instead of shifting the reference line', function (): void {
+    try {
+        new EpcPayment('Acme', 'DE89370400440532013000', purpose: "GDDS\n", reference: 'RF18539007547034');
+        $this->fail('expected a failure');
+    } catch (InvalidPayloadException $e) {
+        expect($e->field)->toBe('purpose');
+    }
+
+    expect((new EpcPayment('Acme', 'DE89370400440532013000', purpose: 'GDDS', reference: 'RF18539007547034'))->toQrString())
+        ->toEndWith("\nGDDS\nRF18539007547034");
+});
