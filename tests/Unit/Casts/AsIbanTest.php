@@ -45,3 +45,18 @@ it('maps empty values to null', function (mixed $value): void {
 it('refuses invalid IBANs', function (): void {
     ibanModel()->setAttribute('iban', 'SK9611000000002918599668');
 })->throws(InvalidIbanException::class);
+
+it('refuses a value that is not a string with InvalidIbanException, not a TypeError', function (mixed $value): void {
+    try {
+        ibanModel()->setAttribute('iban', $value);
+        $this->fail('expected a failure');
+    } catch (InvalidIbanException $e) {
+        expect($e->reason)->toBe('iban_format');
+    }
+})->with([
+    'int' => [12345],
+    'float' => [12.5],
+    'bool' => [true],
+    'array' => [['x']],
+    'object' => [new stdClass],
+]);

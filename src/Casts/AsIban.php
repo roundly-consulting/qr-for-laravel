@@ -42,6 +42,21 @@ final class AsIban implements CastsAttributes
             return $value->electronic();
         }
 
+        return self::electronic($value);
+    }
+
+    /**
+     * Eloquent hands the cast whatever was assigned, whatever the declared write type, so a
+     * value that is not a string is refused as an invalid IBAN rather than with a TypeError.
+     *
+     * @throws InvalidIbanException
+     */
+    private static function electronic(mixed $value): string
+    {
+        if (! is_string($value)) {
+            throw InvalidIbanException::format();
+        }
+
         return Iban::fromString($value)->electronic();
     }
 }
