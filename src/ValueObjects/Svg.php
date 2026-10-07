@@ -31,7 +31,7 @@ final class Svg implements Htmlable, Responsable, Stringable
 
     public const string CONTENT_SECURITY_POLICY = "default-src 'none'; style-src 'unsafe-inline'";
 
-    private const string ATTRIBUTE_PATTERN = '/^(class|style|id|data-[a-z0-9-]+|aria-[a-z]+)$/';
+    private const string ATTRIBUTE_PATTERN = '/^(class|style|id|data-[a-z0-9-]+|aria-[a-z]+)\z/';
 
     /**
      * @param  array<string, string>  $rootAttributes  already escaped, in output order

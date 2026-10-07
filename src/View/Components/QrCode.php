@@ -21,7 +21,7 @@ use RoundlyConsulting\Qr\Support\DeferredHtml;
  */
 final class QrCode extends Component
 {
-    private const string ATTRIBUTE_PATTERN = '/^(class|style|id|data-[a-z0-9-]+|aria-[a-z]+)$/';
+    private const string ATTRIBUTE_PATTERN = '/^(class|style|id|data-[a-z0-9-]+|aria-[a-z]+)\z/';
 
     public function __construct(
         public string|Payload $data,

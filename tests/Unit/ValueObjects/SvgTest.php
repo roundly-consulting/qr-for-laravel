@@ -113,3 +113,10 @@ it('downloads with a safe attachment filename', function (): void {
         ->and(sampleSvg()->download('../faktúra "1".svg')->headers->get('Content-Disposition'))
         ->toBe('attachment; filename=.._faktura__1_.svg; filename*=utf-8\'\'.._fakt%C3%BAra%20_1_.svg');
 });
+
+it('rejects an attribute name with a trailing newline', function (Closure $build): void {
+    expect($build)->toThrow(InvalidOptionException::class);
+})->with([
+    'root attribute' => [fn () => sampleSvg()->withAttributes(["aria-label\n" => 'x'])],
+    'img attribute' => [fn () => sampleSvg()->toImgTag(null, ["class\n" => 'a'])],
+]);

@@ -94,3 +94,11 @@ function bootQrProvider(): void
     $provider->register();
     $provider->boot();
 }
+
+it('drops an attribute name with a trailing newline from the bag', function (): void {
+    $html = (string) (new QrCode('x'))->withAttributes(["class\n" => 'a', 'data-qr' => 'yes'])->render();
+
+    expect($html)->not->toContain("class\n")
+        ->and($html)->toContain('data-qr="yes"')
+        ->and(new DOMDocument()->loadXML($html))->toBeTrue();
+});

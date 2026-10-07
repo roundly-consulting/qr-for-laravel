@@ -16,6 +16,7 @@ All notable changes to `qr-for-laravel` are documented in this file. The format 
 - `Email` now percent-encodes `,` in the `mailto:` address, so a valid quoted address such as `"x,attacker@evil.com,"@example.com` cannot read as an extra recipient in mail clients that split on commas.
 - Raw text that starts with a byte order mark or a Unicode space (no-break space, em space, …) before `WIFI:`, `otpauth:` or `otpauth-migration:` is now recognised as Secret, like plain whitespace was. Before, such a Wi-Fi password or 2FA seed was treated as public: memoised, cached and served with public cache headers.
 - `Otpauth::fromUri()` now rejects a `digits`, `period` or `counter` value with a trailing newline (`digits=6%0A`) instead of passing it through to the enrolment code.
+- `Svg::withAttributes()` and `Svg::toImgTag()` now reject an attribute name with a trailing newline (`"aria-label\n"`), and `<x-qr-code>` drops one from its attribute bag. Before, the name was written verbatim, duplicating the attribute and breaking the XML.
 
 ## 1.0.2 - 2026-10-04
 
