@@ -168,7 +168,7 @@ final readonly class Payment
      */
     public static function assertSymbol(?string $value, string $field, int $digits): void
     {
-        if ($value !== null && preg_match('/^[0-9]{0,'.$digits.'}$/', $value) !== 1) {
+        if ($value !== null && preg_match('/^[0-9]{0,'.$digits.'}\z/', $value) !== 1) {
             throw InvalidPayloadException::invalidFormat(PayBySquare::TYPE, $field);
         }
     }

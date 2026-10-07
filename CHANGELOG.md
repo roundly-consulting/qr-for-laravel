@@ -29,6 +29,7 @@ All notable changes to `qr-for-laravel` are documented in this file. The format 
 - `MatrixDecoder::decode()` now throws `MatrixDecodeException` for a kanji value that is no Shift JIS kanji, as it already did for out-of-range numeric and alphanumeric values, instead of decoding it to `?`.
 - `MatrixDecoder::decode()` now reports the first ECI designator of a symbol with several, like the encoder's `EncodingInfo::$eciDesignator`; before, `DecodedQr::$eciDesignator` held the last.
 - `qr:make --output` without `--force` now creates the file exclusively, so a file another process creates between the existence check and the write is refused ("already exists") instead of overwritten.
+- PAY by square variable, constant and specific symbols (also on `DirectDebitDetails`) now reject a trailing newline (`"123\n"`) instead of writing it into the code.
 
 ## 1.0.2 - 2026-10-04
 

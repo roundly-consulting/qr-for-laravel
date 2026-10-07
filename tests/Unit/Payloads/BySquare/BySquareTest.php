@@ -430,3 +430,21 @@ it('caps payments and accounts at the 99 the data model can count', function ():
     expect(PayBySquare::decode($payments->encode())->payments)->toHaveCount(99)
         ->and(PayBySquare::decode($accountsDocument->encode())->payments[0]->accounts)->toHaveCount(99);
 });
+
+it('rejects a symbol with a trailing newline', function (Closure $build, string $field): void {
+    try {
+        $build();
+        $this->fail('expected a failure');
+    } catch (InvalidPayloadException $e) {
+        expect($e->field)->toBe($field)->and($e->reason)->toBe(InvalidPayloadException::REASON_INVALID_FORMAT);
+    }
+
+    expect(bsqOrder(extra: ['variableSymbol' => '1234567890', 'constantSymbol' => '0308', 'specificSymbol' => '123'])->constantSymbol)->toBe('0308');
+})->with([
+    'variable symbol' => [fn () => bsqOrder(extra: ['variableSymbol' => "123\n"]), 'variableSymbol'],
+    'variable symbol at the limit' => [fn () => bsqOrder(extra: ['variableSymbol' => "1234567890\n"]), 'variableSymbol'],
+    'constant symbol' => [fn () => bsqOrder(extra: ['constantSymbol' => "0308\n"]), 'constantSymbol'],
+    'specific symbol' => [fn () => bsqOrder(extra: ['specificSymbol' => "123\n"]), 'specificSymbol'],
+    'direct debit variable symbol' => [fn () => new DirectDebitDetails(variableSymbol: "123\n"), 'directDebit.variableSymbol'],
+    'direct debit specific symbol' => [fn () => new DirectDebitDetails(specificSymbol: "123\n"), 'directDebit.specificSymbol'],
+]);
