@@ -15,6 +15,7 @@ All notable changes to `qr-for-laravel` are documented in this file. The format 
 - `Url` now rejects a backslash in the authority of an `http`/`https` (and other WHATWG special-scheme) URL. Browsers end the host at `\`, so `https://evil.example\@bank.example/` opened `evil.example` while `Url::$host` and the SVG description named `bank.example`.
 - `Email` now percent-encodes `,` in the `mailto:` address, so a valid quoted address such as `"x,attacker@evil.com,"@example.com` cannot read as an extra recipient in mail clients that split on commas.
 - Raw text that starts with a byte order mark or a Unicode space (no-break space, em space, …) before `WIFI:`, `otpauth:` or `otpauth-migration:` is now recognised as Secret, like plain whitespace was. Before, such a Wi-Fi password or 2FA seed was treated as public: memoised, cached and served with public cache headers.
+- `Otpauth::fromUri()` now rejects a `digits`, `period` or `counter` value with a trailing newline (`digits=6%0A`) instead of passing it through to the enrolment code.
 
 ## 1.0.2 - 2026-10-04
 

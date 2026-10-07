@@ -240,7 +240,7 @@ final readonly class Otpauth implements Payload
 
     private static function assertIntegerBetween(string $value, string $field, int $min, int $max): void
     {
-        if (preg_match('/^\d{1,18}$/', $value) !== 1 || (int) $value < $min || (int) $value > $max) {
+        if (preg_match('/^\d{1,18}\z/', $value) !== 1 || (int) $value < $min || (int) $value > $max) {
             throw InvalidPayloadException::outOfRange('Otpauth', $field);
         }
     }

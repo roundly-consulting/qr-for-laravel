@@ -104,3 +104,19 @@ it('rejects invalid build parameters', function (Closure $build, string $field):
     [fn () => Otpauth::totp(OTP_SECRET, 'user', 'Acme', period: 0), 'period'],
     [fn () => Otpauth::hotp(OTP_SECRET, 'user', 'Acme', -1), 'counter'],
 ]);
+
+it('rejects a numeric parameter with a trailing newline', function (string $query, string $field): void {
+    try {
+        Otpauth::fromUri('otpauth://hotp/A:b?secret=JBSWY3DP&'.$query);
+        $this->fail('expected a failure');
+    } catch (InvalidPayloadException $e) {
+        expect($e->field)->toBe($field)->and($e->reason)->toBe(InvalidPayloadException::REASON_OUT_OF_RANGE);
+    }
+
+    expect(Otpauth::fromUri('otpauth://hotp/A:b?secret=JBSWY3DP&counter=1&digits=6&period=30')->toQrString())
+        ->toBe('otpauth://hotp/A:b?secret=JBSWY3DP&counter=1&digits=6&period=30');
+})->with([
+    'digits' => ['counter=1&digits=6%0A', 'digits'],
+    'period' => ['counter=1&period=30%0A', 'period'],
+    'counter' => ['counter=1%0A', 'counter'],
+]);
