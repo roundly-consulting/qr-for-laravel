@@ -252,3 +252,13 @@ it('rejects text that is not valid UTF-8 instead of emitting a payload it cannot
     'information' => [fn () => new EpcPayment('Jan', 'SK9611000000002918599669', information: "\xFF"), 'information'],
     'reference' => [fn () => new EpcPayment('Jan', 'SK9611000000002918599669', reference: "INV\xE1"), 'reference'],
 ]);
+
+it('parses a full 12-element payload with one trailing separator like a shorter one', function (): void {
+    $payload = "BCD\n002\n1\nSCT\nTATRSKBX\nJana\nSK9611000000002918599669\nEUR1\nGDDS\n\nThanks\nInfo";
+    $expected = EpcPayment::fromString($payload)->toQrString();
+
+    expect($expected)->toBe($payload)
+        ->and(EpcPayment::fromString($payload."\n")->toQrString())->toBe($expected)
+        ->and(EpcPayment::fromString(str_replace("\n", "\r\n", $payload)."\r\n")->toQrString())->toBe($expected)
+        ->and(fn () => EpcPayment::fromString($payload."\n\n"))->toThrow(InvalidPayloadException::class, '[payload]');
+});

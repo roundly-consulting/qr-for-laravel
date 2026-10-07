@@ -134,7 +134,15 @@ final readonly class EpcPayment implements Payload
             throw PaymentPayloadTooLongException::bytes(self::TYPE, strlen($payload), self::MAX_BYTES);
         }
 
-        $lines = explode("\n", str_replace("\r\n", "\n", $payload));
+        $payload = str_replace("\r\n", "\n", $payload);
+
+        // EPC069-12 forbids a trailing separator, but tolerate one consistently: a shorter
+        // payload already absorbed it as an empty element, a full 12-element one did not.
+        if (str_ends_with($payload, "\n")) {
+            $payload = substr($payload, 0, -1);
+        }
+
+        $lines = explode("\n", $payload);
 
         if (count($lines) < 7 || count($lines) > 12 || $lines[0] !== 'BCD' || $lines[3] !== 'SCT') {
             throw InvalidPayloadException::invalidFormat(self::TYPE, 'payload');
