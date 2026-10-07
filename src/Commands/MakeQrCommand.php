@@ -90,13 +90,20 @@ final class MakeQrCommand extends Command
             return self::SUCCESS;
         }
 
-        if (file_exists($output) && $this->option('force') !== true) {
-            $this->components->error("[{$output}] already exists. Use --force to overwrite it.");
+        $force = $this->option('force') === true;
 
-            return self::FAILURE;
+        if (! $force && file_exists($output)) {
+            return $this->refuseOverwrite($output);
         }
 
-        if (@file_put_contents($output, $svg) === false) {
+        $written = $force ? @file_put_contents($output, $svg) !== false : self::writeNew($output, $svg);
+
+        if (! $written) {
+            // Created by someone else since the check above: still never overwritten.
+            if (! $force && file_exists($output)) {
+                return $this->refuseOverwrite($output);
+            }
+
             $this->components->error("Could not write [{$output}].");
 
             return self::FAILURE;
@@ -105,6 +112,30 @@ final class MakeQrCommand extends Command
         $this->components->info("QR code written to [{$output}].");
 
         return self::SUCCESS;
+    }
+
+    private function refuseOverwrite(string $output): int
+    {
+        $this->components->error("[{$output}] already exists. Use --force to overwrite it.");
+
+        return self::FAILURE;
+    }
+
+    /**
+     * Create the file and write it in one step: mode "x" fails when the file exists, so a
+     * file that appears after the existence check is never truncated.
+     */
+    private static function writeNew(string $output, string $contents): bool
+    {
+        $handle = @fopen($output, 'xb');
+
+        if ($handle === false) {
+            return false;
+        }
+
+        $written = fwrite($handle, $contents) === strlen($contents);
+
+        return fclose($handle) && $written;
     }
 
     private function printInfo(EncodingInfo $info): int

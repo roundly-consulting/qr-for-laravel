@@ -108,3 +108,68 @@ it('keeps the configured other version bound when only one version option is giv
     expect(Artisan::call('qr:make', ['data' => str_repeat('x', 300), '--min-version' => '10', '--info' => true]))->toBe(1)
         ->and(Artisan::output())->toContain('versions 10-12');
 });
+
+/**
+ * A stream wrapper standing in for a concurrent writer: the first existence check of an
+ * entry reports it absent and then creates it, like another process writing in between.
+ * Opening with "x" refuses an entry that exists, as the local filesystem does.
+ */
+final class RacingWriterStream
+{
+    /** @var array<string, string> */
+    public static array $files = [];
+
+    /** @var resource|null */
+    public $context;
+
+    private string $path = '';
+
+    /** @return array<string, int>|false */
+    public function url_stat(string $path, int $flags): array|false
+    {
+        if (! array_key_exists($path, self::$files)) {
+            self::$files[$path] = 'VICTIM CONTENT';
+
+            return false;
+        }
+
+        return ['mode' => 0100644, 'size' => strlen(self::$files[$path])];
+    }
+
+    public function stream_open(string $path, string $mode, int $options, ?string &$openedPath): bool
+    {
+        if (str_contains($mode, 'x') && array_key_exists($path, self::$files)) {
+            return false;
+        }
+
+        $this->path = $path;
+        self::$files[$path] = '';
+
+        return true;
+    }
+
+    public function stream_write(string $data): int
+    {
+        self::$files[$this->path] .= $data;
+
+        return strlen($data);
+    }
+
+    public function stream_close(): void {}
+}
+
+it('never overwrites a file created between the existence check and the write', function (): void {
+    RacingWriterStream::$files = [];
+    stream_wrapper_register('race', RacingWriterStream::class);
+
+    try {
+        expect(Artisan::call('qr:make', ['data' => 'x', '--output' => 'race://out.svg']))->toBe(1)
+            ->and(Artisan::output())->toContain('already exists')
+            ->and(RacingWriterStream::$files['race://out.svg'])->toBe('VICTIM CONTENT');
+
+        expect(Artisan::call('qr:make', ['data' => 'x', '--output' => 'race://out.svg', '--force' => true]))->toBe(0)
+            ->and(RacingWriterStream::$files['race://out.svg'])->toStartWith('<?xml');
+    } finally {
+        stream_wrapper_unregister('race');
+    }
+});
