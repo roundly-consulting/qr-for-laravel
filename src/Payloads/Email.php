@@ -54,14 +54,15 @@ final readonly class Email implements Payload
     }
 
     /**
-     * RFC 6068 §2: `%`, `/`, `?`, `#`, `[`, `]`, `&`, `;`, `=` and every character a URI
+     * RFC 6068 §2: `%`, `/`, `?`, `#`, `[`, `]`, `&`, `;`, `=`, `,` and every character a URI
      * cannot hold (incl. each UTF-8 byte of a non-ASCII character) are percent-encoded, so a
-     * valid address such as `x?bcc=…&y@example.com` cannot add a header or a recipient.
+     * valid address such as `x?bcc=…&y@example.com` or `"x,a@evil.com,"@example.com` cannot
+     * add a header or a recipient (`,` separates the addresses of the `to` list).
      */
     private static function encodeAddress(string $address): string
     {
         return (string) preg_replace_callback(
-            "/[^A-Za-z0-9\\-._~!$'()*+,:@]/",
+            "/[^A-Za-z0-9\\-._~!$'()*+:@]/",
             static fn (array $match): string => rawurlencode($match[0]),
             $address,
         );

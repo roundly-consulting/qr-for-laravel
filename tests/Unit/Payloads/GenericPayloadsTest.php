@@ -344,3 +344,8 @@ it('rejects a backslash in a web URL authority, where browsers end the host', fu
         ->and((new Url('https://bank.example/a\b'))->host)->toBe('bank.example')
         ->and((new Url('myapp://evil.example\@bank.example/', ['myapp']))->host)->toBe('bank.example');
 });
+
+it('percent-encodes a comma in the mailto address so it cannot split into recipients', function (): void {
+    expect((new Email('"x,attacker@evil.com,"@example.com', 'Hi'))->toQrString())
+        ->toBe('mailto:%22x%2Cattacker@evil.com%2C%22@example.com?subject=Hi');
+});
