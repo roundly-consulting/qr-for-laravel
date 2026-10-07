@@ -307,7 +307,15 @@ final class PendingQr implements Htmlable, Responsable, Stringable
         }
 
         if ($options->minVersion !== null || $options->maxVersion !== null) {
-            $pending = $pending->versions($options->minVersion ?? $pending->minVersion ?? 1, $options->maxVersion ?? $pending->maxVersion ?? 40);
+            $min = $options->minVersion ?? $pending->minVersion;
+            $max = $options->maxVersion ?? $pending->maxVersion;
+
+            // A bound left unset comes from the configuration, narrowed towards the one that
+            // was given so a single valid bound never conflicts with the configured window.
+            $pending = $pending->versions(
+                $min ?? min(ConfigGuard::minVersion(), $max ?? 40),
+                $max ?? max(ConfigGuard::maxVersion(), $min ?? 1),
+            );
         }
 
         if ($options->mask !== null) {

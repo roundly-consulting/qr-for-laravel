@@ -216,3 +216,16 @@ it('renders a matrix-faithful path through the builder', function (): void {
 
     expect(PathRasterizer::rows(PathRasterizer::pathData($svg->toString()), $svg->matrix()->size(), 2))->toBe($svg->matrix()->rows());
 });
+
+it('keeps the configured other version bound when QrOptions sets only one', function (): void {
+    config(['qr.versions.min' => 5, 'qr.versions.max' => 12]);
+
+    expect(fn () => Qr::text(str_repeat('x', 300))->withOptions(new QrOptions(minVersion: 10))->info())
+        ->toThrow(DataTooLongException::class, 'versions 10-12')
+        ->and(Qr::text('x')->withOptions(new QrOptions(maxVersion: 8))->info()->version)->toBe(5)
+        ->and(Qr::text('x')->withOptions(new QrOptions(minVersion: 7))->info()->version)->toBe(7)
+        // A single bound outside the configured window narrows it instead of throwing.
+        ->and(Qr::text('x')->withOptions(new QrOptions(maxVersion: 3))->info()->version)->toBe(3)
+        ->and(Qr::text('x')->withOptions(new QrOptions(minVersion: 20))->info()->version)->toBe(20)
+        ->and(Qr::text('x')->versions(6, 9)->withOptions(new QrOptions(maxVersion: 8))->info()->version)->toBe(6);
+});

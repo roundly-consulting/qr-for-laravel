@@ -92,3 +92,19 @@ it('rejects option values that are not integers', function (mixed $value): void 
     'array' => [[3]],
     'signed text' => ['+3'],
 ]);
+
+it('keeps the configured other version bound when only one version option is given', function (): void {
+    config(['qr.versions.min' => 5, 'qr.versions.max' => 12]);
+
+    Artisan::call('qr:make', ['data' => 'x', '--max-version' => '8', '--info' => true]);
+    expect(Artisan::output())->toMatch('/Version[ .]+5\s/');
+
+    Artisan::call('qr:make', ['data' => 'x', '--min-version' => '7', '--info' => true]);
+    expect(Artisan::output())->toMatch('/Version[ .]+7\s/');
+
+    Artisan::call('qr:make', ['data' => 'x', '--max-version' => '3', '--info' => true]);
+    expect(Artisan::output())->toMatch('/Version[ .]+3\s/');
+
+    expect(Artisan::call('qr:make', ['data' => str_repeat('x', 300), '--min-version' => '10', '--info' => true]))->toBe(1)
+        ->and(Artisan::output())->toContain('versions 10-12');
+});

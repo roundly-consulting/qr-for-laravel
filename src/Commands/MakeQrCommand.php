@@ -7,6 +7,7 @@ namespace RoundlyConsulting\Qr\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Console\OutputStyle;
 use RoundlyConsulting\Qr\Contracts\QrFactory;
+use RoundlyConsulting\Qr\DataTransferObjects\QrOptions;
 use RoundlyConsulting\Qr\Exceptions\InvalidOptionException;
 use RoundlyConsulting\Qr\Exceptions\QrException;
 use RoundlyConsulting\Qr\ValueObjects\EncodingInfo;
@@ -47,7 +48,7 @@ final class MakeQrCommand extends Command
             }
 
             if ($this->option('min-version') !== null || $this->option('max-version') !== null) {
-                $pending = $pending->versions($this->intOption('min-version') ?? 1, $this->intOption('max-version') ?? 40);
+                $pending = $pending->withOptions(new QrOptions(minVersion: $this->intOption('min-version'), maxVersion: $this->intOption('max-version')));
             }
 
             if (($mask = $this->intOption('mask')) !== null) {
