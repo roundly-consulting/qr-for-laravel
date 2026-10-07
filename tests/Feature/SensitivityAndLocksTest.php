@@ -79,3 +79,23 @@ it('explains a locked option in words that fit every content type', function (st
     'sk, otpauth' => ['sk', fn () => Qr::otpauth('otpauth://totp/A:b?secret=JBSWY3DP')->sensitivity(Sensitivity::Public)->svg(), 'Možnosť sensitivity je pevne určená týmto typom obsahu.'],
     'sk, otpauth url' => ['sk', fn () => Qr::url('otpauth://totp/A:b?secret=JBSWY3DP', ['otpauth'])->sensitivity(Sensitivity::Public)->svg(), 'Možnosť sensitivity je pevne určená týmto typom obsahu.'],
 ]);
+
+it('sees a secret behind a leading byte order mark or Unicode space', function (string $prefix): void {
+    $wifi = new Text($prefix.'WIFI:T:WPA;S:Home;P:secret;;');
+    $seed = new Text($prefix.'otpauth://totp/A:b?secret=JBSWY3DP');
+
+    expect($wifi->sensitivity())->toBe(Sensitivity::Secret)
+        ->and($seed->sensitivity())->toBe(Sensitivity::Secret)
+        ->and((new Text($prefix."WIFI:T:WPA;S:x;P:p\xE1ss;;"))->sensitivity())->toBe(Sensitivity::Secret)
+        ->and($seed->requirements()->locks('sensitivity'))->toBeTrue()
+        ->and(fn () => Qr::text($prefix.'otpauth://totp/A:b?secret=JBSWY3DP')->sensitivity(Sensitivity::Public)->svg())
+        ->toThrow(InvalidOptionException::class, '[sensitivity]');
+
+    Route::get('/qr/bom', fn () => Qr::text($prefix.'WIFI:T:WPA;S:Home;P:secret;;'));
+
+    expect($this->get('/qr/bom')->assertOk()->headers->get('Cache-Control'))->toContain('no-store')->toContain('private');
+})->with([
+    'byte order mark' => ["\u{FEFF}"],
+    'no-break space' => ["\u{00A0}"],
+    'mixed' => [" \u{FEFF}\u{2003}"],
+]);
