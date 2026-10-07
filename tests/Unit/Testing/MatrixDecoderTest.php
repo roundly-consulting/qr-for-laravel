@@ -150,3 +150,31 @@ it('rejects out-of-range values inside segments', function (array $data, string 
     // byte, count 200 — runs off the end of the stream
     'truncated' => [[0b0100_1100, 0b1000_0000], 'ends inside a segment'],
 ]);
+
+/**
+ * Version 1-L rows holding one kanji segment with a raw 13-bit value.
+ *
+ * @return list<string>
+ */
+function kanjiValueRows(int $value): array
+{
+    $bits = '1000'.'00000001'.str_pad(decbin($value), 13, '0', STR_PAD_LEFT).'0000';
+    $bits = str_pad($bits, (int) ceil(strlen($bits) / 8) * 8, '0');
+
+    return rowsForCodewords(array_pad(array_map(bindec(...), str_split($bits, 8)), 19, 0));
+}
+
+it('rejects kanji values that are no Shift JIS kanji instead of decoding them to "?"', function (int $value): void {
+    expect(fn () => MatrixDecoder::decode(kanjiValueRows($value)))->toThrow(MatrixDecodeException::class, 'kanji');
+})->with([
+    '0x1FFF' => [0x1FFF],
+    '0x00BF' => [0x00BF],
+    '0x17FF' => [0x17FF],
+    '0x1F3F' => [0x1F3F],
+]);
+
+it('still decodes valid kanji values', function (): void {
+    expect(MatrixDecoder::decode(kanjiValueRows(0x0000))->bytes)->toBe("\u{3000}")
+        ->and(MatrixDecoder::decode(kanjiValueRows(0x0D9F))->bytes)->toBe('点')
+        ->and(MatrixDecoder::decode(kanjiValueRows(0x1AAA))->bytes)->toBe('茗');
+});

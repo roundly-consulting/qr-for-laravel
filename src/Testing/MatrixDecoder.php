@@ -267,7 +267,17 @@ final class MatrixDecoder
         $text = '';
 
         for ($i = 0; $i < $count; $i++) {
-            $text .= ShiftJis::fromKanjiValue($read(13));
+            $value = $read(13);
+            $character = ShiftJis::fromKanjiValue($value);
+
+            // mbstring substitutes "?" for a code that is no Shift JIS kanji (a trail byte
+            // outside 0x40–0xFC, an unmapped code): only a value that converts both ways is
+            // one the encoder could have written.
+            if (ShiftJis::kanjiValue($character) !== $value) {
+                throw MatrixDecodeException::segment('kanji value out of range');
+            }
+
+            $text .= $character;
         }
 
         return $text;
