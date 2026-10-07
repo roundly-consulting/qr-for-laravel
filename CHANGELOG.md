@@ -27,6 +27,7 @@ All notable changes to `qr-for-laravel` are documented in this file. The format 
 - Assigning a value that is not a string (for example `12345`) to an `AsIban` attribute now throws `InvalidIbanException`, as documented, instead of a `TypeError`.
 - `DataTooLongException::$neededBits` now includes the character-count indicators when a segment's count overflows the largest allowed version (300 bytes with `maxVersion: 9` reports 2420 bits, not 2404).
 - `MatrixDecoder::decode()` now throws `MatrixDecodeException` for a kanji value that is no Shift JIS kanji, as it already did for out-of-range numeric and alphanumeric values, instead of decoding it to `?`.
+- `MatrixDecoder::decode()` now reports the first ECI designator of a symbol with several, like the encoder's `EncodingInfo::$eciDesignator`; before, `DecodedQr::$eciDesignator` held the last.
 
 ## 1.0.2 - 2026-10-04
 

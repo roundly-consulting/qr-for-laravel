@@ -8,7 +8,8 @@ use RoundlyConsulting\Qr\Enums\ErrorCorrection;
 
 /**
  * How a symbol was built: version, level (and whether it was boosted), mask, segments and
- * bit budget. `maskPenalties` holds the eight ISO penalty scores when the mask was chosen
+ * bit budget. `eciDesignator` is the first ECI designator in the symbol (null when it has
+ * none). `maskPenalties` holds the eight ISO penalty scores when the mask was chosen
  * automatically, and is empty for a forced mask.
  */
 final readonly class EncodingInfo

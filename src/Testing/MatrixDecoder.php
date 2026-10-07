@@ -170,7 +170,10 @@ final class MatrixDecoder
             $start = $position;
 
             if ($mode === Mode::Eci) {
-                $eci = self::readEci($read);
+                // Read every designator (its bits must be consumed) but report the first,
+                // as the encoder's EncodingInfo does.
+                $designator = self::readEci($read);
+                $eci ??= $designator;
                 $segments[] = new SegmentInfo($mode, 0, 4 + $position - $start);
 
                 continue;

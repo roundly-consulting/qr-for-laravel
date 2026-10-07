@@ -178,3 +178,14 @@ it('still decodes valid kanji values', function (): void {
         ->and(MatrixDecoder::decode(kanjiValueRows(0x0D9F))->bytes)->toBe('点')
         ->and(MatrixDecoder::decode(kanjiValueRows(0x1AAA))->bytes)->toBe('茗');
 });
+
+it('reports the first ECI designator, like the encoder', function (): void {
+    $matrix = (new Encoder)->encodeSegments([Segment::eci(26), Segment::bytes('a'), Segment::eci(3), Segment::bytes("\xE9")]);
+    $decoded = MatrixDecoder::decode($matrix);
+
+    expect($matrix->info()->eciDesignator)->toBe(26)
+        ->and($decoded->eciDesignator)->toBe(26)
+        ->and($decoded->bytes)->toBe("a\xE9")
+        ->and($decoded->segments)->toHaveCount(4)
+        ->and(array_map(static fn ($s): Mode => $s->mode, $decoded->segments))->toBe([Mode::Eci, Mode::Byte, Mode::Eci, Mode::Byte]);
+});
