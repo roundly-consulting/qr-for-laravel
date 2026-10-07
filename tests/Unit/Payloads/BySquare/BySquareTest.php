@@ -25,6 +25,7 @@ use RoundlyConsulting\Qr\Payloads\Payments\BySquare\BankAccount;
 use RoundlyConsulting\Qr\Payloads\Payments\BySquare\Base32Hex;
 use RoundlyConsulting\Qr\Payloads\Payments\BySquare\Beneficiary;
 use RoundlyConsulting\Qr\Payloads\Payments\BySquare\BySquareCodec;
+use RoundlyConsulting\Qr\Payloads\Payments\BySquare\BySquareSerializer;
 use RoundlyConsulting\Qr\Payloads\Payments\BySquare\Deburr;
 use RoundlyConsulting\Qr\Payloads\Payments\BySquare\DirectDebitDetails;
 use RoundlyConsulting\Qr\Payloads\Payments\BySquare\PayBySquare;
@@ -355,4 +356,35 @@ it('applies configured defaults through the manager only, as documented', functi
 
     expect(Qr::payBySquare($document)->payload()->toQrString())->toStartWith('04')
         ->and($document->encode())->toStartWith('08');
+});
+
+it('refuses a beneficiary name that deburring would blank', function (string $name, BySquareVersion $version): void {
+    try {
+        (new PayBySquare([bsqOrder(new Beneficiary($name))], version: $version))->encode();
+        $this->fail('expected a failure');
+    } catch (InvalidPayloadException $e) {
+        expect($e->field)->toBe('beneficiary.name')
+            ->and($e->reason)->toBe(InvalidPayloadException::REASON_UNREPRESENTABLE);
+    }
+
+    $kept = new PayBySquare([bsqOrder(new Beneficiary($name))], version: $version, deburr: false);
+
+    expect(PayBySquare::decode($kept->encode())->payments[0]->beneficiary?->name)->toBe($name);
+})->with([
+    '1.2.0, blanks to nothing' => ['李明', BySquareVersion::V1_2_0],
+    '1.1.0, blanks to a space' => ['李明 商店', BySquareVersion::V1_1_0],
+    '1.2.0, blanks to a space' => ['李明 商店', BySquareVersion::V1_2_0],
+]);
+
+it('trims deburred beneficiary and note text so the output decodes', function (): void {
+    $document = new PayBySquare([bsqOrder(new Beneficiary('Ján Novák 李明', '李明 商店', 'Košice 商店'), extra: ['note' => '商店 Dar'])]);
+
+    expect($document->serialize())->toContain("Jan Novak\t\tKosice")->toContain("\tDar\t")
+        ->and(PayBySquare::decode($document->encode())->serialize())->toBe($document->serialize());
+});
+
+it('decodes a blank beneficiary name written by older encoders as no beneficiary', function (): void {
+    $serialized = str_replace("\tJana\t\t", "\t \t\t", (new PayBySquare([bsqOrder()], version: BySquareVersion::V1_1_0))->serialize());
+
+    expect(BySquareSerializer::unserialize($serialized, BySquareVersion::V1_1_0)->payments[0]->beneficiary)->toBeNull();
 });

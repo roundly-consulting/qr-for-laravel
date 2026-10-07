@@ -73,12 +73,17 @@ final readonly class PayBySquare implements Payload
                 throw InvalidPayloadException::required(self::TYPE, 'beneficiary.name');
             }
 
-            // Deburring can lengthen text ("ß" → "ss"), so the limits are checked again.
+            // Deburring can lengthen text ("ß" → "ss"), so the limits are checked again, and it
+            // can blank a name with no ASCII form ("李明"), which would drop the beneficiary.
             if ($deburr) {
                 self::recheck($payment->note, 'note', 140);
                 self::recheck($payment->beneficiary?->name, 'beneficiary.name', Beneficiary::MAX_LENGTH);
                 self::recheck($payment->beneficiary?->street, 'beneficiary.street', Beneficiary::MAX_LENGTH);
                 self::recheck($payment->beneficiary?->city, 'beneficiary.city', Beneficiary::MAX_LENGTH);
+
+                if ($payment->beneficiary !== null && Deburr::field($payment->beneficiary->name) === '') {
+                    throw InvalidPayloadException::unrepresentable(self::TYPE, 'beneficiary.name', 'ASCII');
+                }
             }
         }
 
@@ -132,7 +137,7 @@ final readonly class PayBySquare implements Payload
 
     private static function recheck(?string $value, string $field, int $max): void
     {
-        if ($value !== null && mb_strlen(Deburr::apply($value)) > $max) {
+        if ($value !== null && mb_strlen(Deburr::field($value)) > $max) {
             throw InvalidPayloadException::tooLong(self::TYPE, $field, $max);
         }
     }

@@ -40,7 +40,7 @@ final class BySquareSerializer
     {
         $text = static fn (?string $value, bool $deburrable = false): string => $value === null
             ? ''
-            : ($deburr && $deburrable ? Deburr::apply(TextNormalizer::clean($value)) : TextNormalizer::clean($value));
+            : ($deburr && $deburrable ? Deburr::field($value) : TextNormalizer::clean($value));
 
         $fields = [$text($document->invoiceId), (string) count($document->payments)];
 
@@ -147,7 +147,8 @@ final class BySquareSerializer
             if ($version->hasBeneficiaryBlock() || count($fields) - $cursor === 3 * $count) {
                 for ($i = 0; $i < $count; $i++) {
                     [$name, $street, $city] = [$next(), $next(), $next()];
-                    $beneficiaries[$i] = $name === '' ? null : new Beneficiary($name, self::nullable($street), self::nullable($city));
+                    // A blank name is "no beneficiary": older encoders wrote a deburred-away name as a space.
+                    $beneficiaries[$i] = trim($name) === '' ? null : new Beneficiary($name, self::nullable($street), self::nullable($city));
                 }
             }
 
