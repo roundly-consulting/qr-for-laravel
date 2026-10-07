@@ -9,6 +9,7 @@ All notable changes to `qr-for-laravel` are documented in this file. The format 
 ### Fixed
 
 - `EpcPayment` now rejects a `purpose` code with a trailing newline (`"GDDS\n"`); before, the newline shifted the creditor reference onto the unstructured-text line of the payment code.
+- `Iban` and `CreditorReference` now reject check digits 00, 01 and 99. They pass the MOD 97-10 test, but the standard's generation rule only ever produces 02–98, so no real IBAN or RF reference carries them. The `Iban` and `CreditorReference` validation rules, the `AsIban` cast and the payment payloads inherit the check.
 
 ## 1.0.2 - 2026-10-04
 

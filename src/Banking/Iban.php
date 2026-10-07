@@ -9,7 +9,8 @@ use Stringable;
 
 /**
  * A validated International Bank Account Number (ISO 13616): known country, exact length,
- * BBAN structure per the SWIFT IBAN Registry and ISO 7064 MOD 97-10 check digits.
+ * BBAN structure per the SWIFT IBAN Registry and ISO 7064 MOD 97-10 check digits in
+ * 02–98, the only range the standard's generation rule produces.
  */
 final readonly class Iban implements Stringable
 {
@@ -42,7 +43,7 @@ final readonly class Iban implements Stringable
             throw InvalidIbanException::format();
         }
 
-        if (Mod97::remainder(substr($iban, 4).substr($iban, 0, 4)) !== 1) {
+        if (! Mod97::issuableCheckDigits(substr($iban, 2, 2)) || Mod97::remainder(substr($iban, 4).substr($iban, 0, 4)) !== 1) {
             throw InvalidIbanException::checksum();
         }
 

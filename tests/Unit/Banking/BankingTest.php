@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Illuminate\Support\Facades\Validator;
 use RoundlyConsulting\Qr\Banking\Bic;
 use RoundlyConsulting\Qr\Banking\CountryCodes;
 use RoundlyConsulting\Qr\Banking\CreditorReference;
@@ -12,6 +13,8 @@ use RoundlyConsulting\Qr\Banking\Mod97;
 use RoundlyConsulting\Qr\Exceptions\InvalidBicException;
 use RoundlyConsulting\Qr\Exceptions\InvalidCreditorReferenceException;
 use RoundlyConsulting\Qr\Exceptions\InvalidIbanException;
+use RoundlyConsulting\Qr\Rules\CreditorReference as CreditorReferenceRule;
+use RoundlyConsulting\Qr\Rules\Iban as IbanRule;
 
 it('computes ISO 7064 MOD 97-10 remainders', function (): void {
     expect(Mod97::remainder('11000000002918599669'.'2820'.'96'))->toBe(1)
@@ -159,3 +162,30 @@ it('rejects malformed creditor references', function (Closure $build, string $re
     [fn () => CreditorReference::generate(''), 'creditor_reference_format'],
     [fn () => CreditorReference::generate('a-b'), 'creditor_reference_format'],
 ]);
+
+it('rejects check digits 00, 01 and 99 that no issuer can produce', function (): void {
+    foreach (['DE00370400440000000060', 'DE01370400440000000042', 'DE99370400440000000024'] as $iban) {
+        try {
+            Iban::fromString($iban);
+            $this->fail("expected {$iban} to fail");
+        } catch (InvalidIbanException $e) {
+            expect($e->reason)->toBe('iban_checksum');
+        }
+
+        expect(Validator::make(['iban' => $iban], ['iban' => [new IbanRule]])->passes())->toBeFalse();
+    }
+
+    foreach (['RF0072', 'RF0154', 'RF9936'] as $reference) {
+        try {
+            CreditorReference::fromString($reference);
+            $this->fail("expected {$reference} to fail");
+        } catch (InvalidCreditorReferenceException $e) {
+            expect($e->reason)->toBe('creditor_reference_checksum');
+        }
+
+        expect(Validator::make(['ref' => $reference], ['ref' => [new CreditorReferenceRule]])->passes())->toBeFalse();
+    }
+
+    expect(Iban::isValid('DE89370400440532013000'))->toBeTrue()
+        ->and(CreditorReference::isValid('RF18539007547034'))->toBeTrue();
+});

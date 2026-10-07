@@ -9,7 +9,8 @@ use Stringable;
 
 /**
  * An ISO 11649 structured creditor reference: `RF`, two check digits and 1–21
- * alphanumerics, valid when the MOD 97-10 remainder of reference + `RF` + check digits is 1.
+ * alphanumerics, valid when the check digits are 02–98 and the MOD 97-10 remainder of
+ * reference + `RF` + check digits is 1.
  */
 final readonly class CreditorReference implements Stringable
 {
@@ -26,7 +27,7 @@ final readonly class CreditorReference implements Stringable
             throw InvalidCreditorReferenceException::format();
         }
 
-        if (Mod97::remainder(substr($reference, 4).substr($reference, 0, 4)) !== 1) {
+        if (! Mod97::issuableCheckDigits(substr($reference, 2, 2)) || Mod97::remainder(substr($reference, 4).substr($reference, 0, 4)) !== 1) {
             throw InvalidCreditorReferenceException::checksum();
         }
 

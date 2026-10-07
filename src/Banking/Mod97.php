@@ -26,4 +26,16 @@ final class Mod97
 
         return $remainder;
     }
+
+    /**
+     * Whether two check digits are ones an issuer can produce: generation computes
+     * 98 − (remainder of the number with `00`), so only 02–98 ever occur. 00, 01 and 99 also
+     * leave remainder 1, but no real IBAN or RF reference carries them.
+     */
+    public static function issuableCheckDigits(string $checkDigits): bool
+    {
+        return preg_match('/^[0-9]{2}\z/', $checkDigits) === 1
+            && (int) $checkDigits >= 2
+            && (int) $checkDigits <= 98;
+    }
 }
