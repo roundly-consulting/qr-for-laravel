@@ -155,8 +155,15 @@ final class Encoder
 
         $max = $options->maxVersion;
         $segments = $segmentsFor($max);
-        $needed = Segment::totalBits($segments, $max)
-            ?? array_sum(array_map(static fn (Segment $segment): int => 4 + strlen($segment->bits), $segments));
+        // A count that overflows the largest version's count field is measured at the next
+        // wider field that holds it, so the figure still includes every count indicator.
+        $needed = Segment::totalBits($segments, $max) ?? array_sum(array_map(
+            static fn (Segment $segment): int => $segment->bitLength($max)
+                ?? $segment->bitLength(10)
+                ?? $segment->bitLength(27)
+                ?? 4 + $segment->mode->charCountBits(27) + strlen($segment->bits),
+            $segments,
+        ));
 
         throw DataTooLongException::capacity($needed, Capacity::dataBits($max, $ecc), $options->minVersion, $max, $ecc);
     }

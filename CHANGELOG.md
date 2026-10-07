@@ -25,6 +25,7 @@ All notable changes to `qr-for-laravel` are documented in this file. The format 
 - `PayBySquare` now refuses more than 99 payments and `Payment` more than 99 accounts (`InvalidPayloadException`, out of range), the most the PAY by square data model can count. Before, such a document encoded but did not decode.
 - `EpcPayment::fromString()` now accepts a full 12-element payload that ends with one trailing LF or CRLF, as it already did for shorter payloads.
 - Assigning a value that is not a string (for example `12345`) to an `AsIban` attribute now throws `InvalidIbanException`, as documented, instead of a `TypeError`.
+- `DataTooLongException::$neededBits` now includes the character-count indicators when a segment's count overflows the largest allowed version (300 bytes with `maxVersion: 9` reports 2420 bits, not 2404).
 
 ## 1.0.2 - 2026-10-04
 

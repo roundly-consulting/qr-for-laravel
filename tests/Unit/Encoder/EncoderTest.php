@@ -180,3 +180,22 @@ it('produces identical matrices for identical input', function (): void {
     expect(encodeVerified('same')->equals(encodeVerified('same')))->toBeTrue()
         ->and(encodeVerified('same')->equals(encodeVerified('other')))->toBeFalse();
 });
+
+it('counts the count field in the needed bits when it overflows at the largest version', function (): void {
+    $bytes = Segment::bytes(str_repeat('x', 300));
+    $digit = Segment::numeric('1');
+
+    foreach ([
+        [[$bytes], (int) $bytes->bitLength(10)],
+        [[$bytes, $digit], (int) $bytes->bitLength(10) + (int) $digit->bitLength(9)],
+    ] as [$segments, $needed]) {
+        try {
+            (new Encoder)->encodeSegments($segments, new EncodeOptions(maxVersion: 9));
+            $this->fail('expected an exception');
+        } catch (DataTooLongException $e) {
+            expect($e->neededBits)->toBe($needed);
+        }
+    }
+
+    expect($bytes->bitLength(10))->toBe(2420)->and($digit->bitLength(9))->toBe(18);
+});
