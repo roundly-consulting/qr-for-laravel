@@ -12,6 +12,7 @@ All notable changes to `qr-for-laravel` are documented in this file. The format 
 - `Iban` and `CreditorReference` now reject check digits 00, 01 and 99. They pass the MOD 97-10 test, but the standard's generation rule only ever produces 02–98, so no real IBAN or RF reference carries them. The `Iban` and `CreditorReference` validation rules, the `AsIban` cast and the payment payloads inherit the check.
 - `PayBySquare::encode()` with deburring on now throws `InvalidPayloadException` (`beneficiary.name`, unrepresentable) when the beneficiary name has no ASCII form (for example `李明`), instead of writing an empty or blank name the package's own decoder and 1.2.0 readers reject. Deburred names, streets, cities and notes are trimmed, and `PayBySquare::decode()` reads a blank name written by earlier versions as no beneficiary.
 - `PendingQr::withOptions()` with only `QrOptions::$minVersion` or only `$maxVersion`, and `qr:make` with only `--min-version` or `--max-version`, now keep the configured other bound (`qr.versions.*`) instead of widening it to 1 or 40. A single bound outside the configured window narrows it rather than throwing.
+- `Url` now rejects a backslash in the authority of an `http`/`https` (and other WHATWG special-scheme) URL. Browsers end the host at `\`, so `https://evil.example\@bank.example/` opened `evil.example` while `Url::$host` and the SVG description named `bank.example`.
 
 ## 1.0.2 - 2026-10-04
 

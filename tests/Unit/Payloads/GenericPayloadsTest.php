@@ -329,3 +329,18 @@ it('formats geo URIs independently of the locale', function (): void {
 it('rejects coordinates out of range', function (float $lat, float $lng, string $field): void {
     expect(fn () => new Geo($lat, $lng))->toThrow(InvalidPayloadException::class, $field);
 })->with([[90.1, 0, 'latitude'], [-91, 0, 'latitude'], [0, 180.5, 'longitude'], [NAN, 0, 'latitude'], [0, INF, 'longitude']]);
+
+it('rejects a backslash in a web URL authority, where browsers end the host', function (): void {
+    foreach (['https://evil.example\@bank.example/', 'http://evil.example\bank.example', 'https://\evil.example/'] as $url) {
+        try {
+            new Url($url);
+            $this->fail("expected {$url} to fail");
+        } catch (InvalidPayloadException $e) {
+            expect($e->reason)->toBe('invalid_format')->and($e->field)->toBe('url');
+        }
+    }
+
+    expect((new Url('https://user@bank.example/'))->host)->toBe('bank.example')
+        ->and((new Url('https://bank.example/a\b'))->host)->toBe('bank.example')
+        ->and((new Url('myapp://evil.example\@bank.example/', ['myapp']))->host)->toBe('bank.example');
+});

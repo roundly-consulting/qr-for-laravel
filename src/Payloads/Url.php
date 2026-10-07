@@ -25,6 +25,11 @@ final readonly class Url implements Payload
 {
     public const int MAX_LENGTH = 4096;
 
+    /**
+     * The WHATWG URL Standard's special schemes, whose authority a backslash ends.
+     */
+    private const array SPECIAL_SCHEMES = ['ftp', 'file', 'http', 'https', 'ws', 'wss'];
+
     public string $scheme;
 
     public string $host;
@@ -59,6 +64,14 @@ final readonly class Url implements Payload
         // parse_url() is not multibyte-safe for hosts, so the host is read from the raw
         // authority: drop user info, then a port or IPv6 brackets.
         $authority = preg_match('#^[^:/?\#]+://([^/?\#]*)#', $url, $match) === 1 ? $match[1] : '';
+
+        // Browsers (the WHATWG URL Standard) end a special scheme's authority at "\" as well
+        // as "/", so `https://evil.example\@bank.example/` opens evil.example: refuse it
+        // rather than describe the code with a host the scanner never visits.
+        if (str_contains($authority, '\\') && in_array($this->scheme, self::SPECIAL_SCHEMES, true)) {
+            throw InvalidPayloadException::invalidFormat('Url', 'url');
+        }
+
         $authority = substr($authority, (int) strrpos('@'.$authority, '@'));
         $this->host = str_starts_with($authority, '[')
             ? substr($authority, 0, (int) strpos($authority, ']') + 1)
