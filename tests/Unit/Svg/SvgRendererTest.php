@@ -117,3 +117,43 @@ it('validates rendering options', function (Closure $build): void {
     fn () => new SvgOptions(moduleRadius: 0.0),
     fn () => new SvgOptions(moduleRadius: 0.51),
 ]);
+
+it('draws square finders square under rounded modules, whatever the finder colour', function (): void {
+    $render = fn (?string $color): string => (new SvgRenderer)->render(helloMatrix(), new SvgOptions(
+        moduleStyle: ModuleStyle::Rounded,
+        moduleRadius: 0.35,
+        finderStyle: FinderStyle::Square,
+        finderColor: $color === null ? null : new Color($color),
+    ))->toString();
+
+    // Even-odd point-in-path over every polygon of the document.
+    $filled = function (string $svg, float $px, float $py): bool {
+        $inside = false;
+
+        foreach (PathRasterizer::polygons(PathRasterizer::pathData($svg)) as $polygon) {
+            for ($i = 0, $j = count($polygon) - 1; $i < count($polygon); $j = $i++) {
+                [$xi, $yi] = $polygon[$i];
+                [$xj, $yj] = $polygon[$j];
+
+                if (($yi > $py) !== ($yj > $py) && $px < ($xj - $xi) * ($py - $yi) / ($yj - $yi) + $xi) {
+                    $inside = ! $inside;
+                }
+            }
+        }
+
+        return $inside;
+    };
+
+    foreach ([null, '#000001'] as $color) {
+        $svg = $render($color);
+
+        expect($filled($svg, 4.03, 4.03))->toBeTrue()       // outer ring corner of the top-left finder
+            ->and($filled($svg, 6.03, 6.03))->toBeTrue()     // corner of its 3×3 centre
+            ->and($filled($svg, 5.5, 5.5))->toBeFalse();      // the light ring between them
+    }
+
+    preg_match_all('/ d="([^"]*)"/', $render('#000001'), $paths);
+
+    expect($paths[1])->toHaveCount(2)
+        ->and(PathRasterizer::pathData($render(null)))->toEndWith($paths[1][1]);
+});

@@ -67,7 +67,9 @@ final class SvgRenderer
         $size = $matrix->size();
         $finderColor = $options->finderColor ?? $options->foreground;
         $separateColor = ! $finderColor->equals($options->foreground);
-        $separateFinders = $separateColor || $options->finderStyle === FinderStyle::Rounded || $options->moduleStyle === ModuleStyle::Dots;
+        // Finders are drawn on their own whenever their shape could differ from the traced
+        // modules, so FinderStyle::Square is always square and a colour never changes geometry.
+        $separateFinders = $separateColor || $options->finderStyle !== FinderStyle::Square || $options->moduleStyle !== ModuleStyle::Square;
 
         $exclude = $separateFinders
             ? static fn (int $x, int $y): bool => FinderShapes::isFinder($x, $y, $size)

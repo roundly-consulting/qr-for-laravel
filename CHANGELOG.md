@@ -6,6 +6,10 @@ All notable changes to `qr-for-laravel` are documented in this file. The format 
 
 ## Unreleased
 
+### Changed
+
+- With `ModuleStyle::Rounded`, `FinderStyle::Square` finders are now always drawn as square rings and centres. Before, they were traced with the data modules and came out rounded, unless a different finder colour was set, which made them square: the colour changed the shape. **Visual change:** hosts that render `ModuleStyle::Rounded` with the default square finders now get square finders; choose `FinderStyle::Rounded` for rounded finders. The shipped configuration (square modules) renders exactly as before.
+
 ### Fixed
 
 - `EpcPayment` now rejects a `purpose` code with a trailing newline (`"GDDS\n"`); before, the newline shifted the creditor reference onto the unstructured-text line of the payment code.
