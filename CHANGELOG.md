@@ -22,6 +22,7 @@ All notable changes to `qr-for-laravel` are documented in this file. The format 
 - `Otpauth::fromUri()` now rejects a `digits`, `period` or `counter` value with a trailing newline (`digits=6%0A`) instead of passing it through to the enrolment code.
 - `Svg::withAttributes()` and `Svg::toImgTag()` now reject an attribute name with a trailing newline (`"aria-label\n"`), and `<x-qr-code>` drops one from its attribute bag. Before, the name was written verbatim, duplicating the attribute and breaking the XML.
 - `EpcPayment`, `PayBySquare`, `Payment`, `Beneficiary` and `DirectDebitDetails` now reject text fields that are not valid UTF-8 with `InvalidPayloadException` (invalid format, naming the field). Before, such text was encoded raw and the package's own `EpcPayment::fromString()` and `PayBySquare::decode()` then refused the code.
+- `PayBySquare` now refuses more than 99 payments and `Payment` more than 99 accounts (`InvalidPayloadException`, out of range), the most the PAY by square data model can count. Before, such a document encoded but did not decode.
 
 ## 1.0.2 - 2026-10-04
 

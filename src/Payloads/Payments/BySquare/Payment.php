@@ -19,6 +19,11 @@ use RoundlyConsulting\Qr\Support\TextNormalizer;
  */
 final readonly class Payment
 {
+    /**
+     * The data model's `accountsCount` holds 1–99.
+     */
+    public const int MAX_ACCOUNTS = 99;
+
     public string $currency;
 
     public ?string $originatorsReference;
@@ -26,7 +31,7 @@ final readonly class Payment
     public ?string $note;
 
     /**
-     * @param  list<BankAccount>  $accounts  at least one
+     * @param  list<BankAccount>  $accounts  1–99
      *
      * @throws InvalidPayloadException
      */
@@ -77,6 +82,10 @@ final readonly class Payment
             throw InvalidPayloadException::required(PayBySquare::TYPE, 'accounts');
         }
 
+        if (count($accounts) > self::MAX_ACCOUNTS) {
+            throw InvalidPayloadException::outOfRange(PayBySquare::TYPE, 'accounts');
+        }
+
         self::assertSymbol($variableSymbol, 'variableSymbol', 10);
         self::assertSymbol($constantSymbol, 'constantSymbol', 4);
         self::assertSymbol($specificSymbol, 'specificSymbol', 10);
@@ -91,7 +100,7 @@ final readonly class Payment
     }
 
     /**
-     * @param  list<BankAccount>  $accounts  at least one
+     * @param  list<BankAccount>  $accounts  1–99
      *
      * @throws InvalidPayloadException
      */
@@ -111,7 +120,7 @@ final readonly class Payment
     }
 
     /**
-     * @param  list<BankAccount>  $accounts  at least one
+     * @param  list<BankAccount>  $accounts  1–99
      *
      * @throws InvalidPayloadException
      */
@@ -132,7 +141,7 @@ final readonly class Payment
     }
 
     /**
-     * @param  list<BankAccount>  $accounts  at least one
+     * @param  list<BankAccount>  $accounts  1–99
      *
      * @throws InvalidPayloadException
      */

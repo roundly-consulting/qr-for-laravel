@@ -408,3 +408,25 @@ it('rejects text that is not valid UTF-8 instead of emitting a code it cannot de
     'creditor id' => [fn () => new DirectDebitDetails(creditorId: "C\xE1"), 'directDebit.creditorId'],
     'contract id' => [fn () => new DirectDebitDetails(contractId: "K\xE1"), 'directDebit.contractId'],
 ]);
+
+it('caps payments and accounts at the 99 the data model can count', function (): void {
+    $accounts = static fn (int $count): array => array_fill(0, $count, new BankAccount(SK_IBAN));
+
+    foreach ([
+        'payments' => fn () => new PayBySquare(array_fill(0, 100, bsqOrder())),
+        'accounts' => fn () => Payment::order(Money::ofMinor(100, 'EUR'), $accounts(100)),
+    ] as $field => $build) {
+        try {
+            $build();
+            $this->fail("expected 100 {$field} to fail");
+        } catch (InvalidPayloadException $e) {
+            expect($e->field)->toBe($field)->and($e->reason)->toBe(InvalidPayloadException::REASON_OUT_OF_RANGE);
+        }
+    }
+
+    $payments = new PayBySquare(array_fill(0, 99, bsqOrder()));
+    $accountsDocument = new PayBySquare([Payment::order(Money::ofMinor(100, 'EUR'), $accounts(99), new Beneficiary('Jana'))]);
+
+    expect(PayBySquare::decode($payments->encode())->payments)->toHaveCount(99)
+        ->and(PayBySquare::decode($accountsDocument->encode())->payments[0]->accounts)->toHaveCount(99);
+});

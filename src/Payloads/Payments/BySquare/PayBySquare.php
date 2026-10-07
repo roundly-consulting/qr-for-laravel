@@ -24,10 +24,15 @@ final readonly class PayBySquare implements Payload
 {
     public const string TYPE = 'PAY by square';
 
+    /**
+     * The data model's `paymentsCount` holds 1–99.
+     */
+    public const int MAX_PAYMENTS = 99;
+
     public ?string $invoiceId;
 
     /**
-     * @param  list<Payment>  $payments  first = preferred; at least one
+     * @param  list<Payment>  $payments  first = preferred; 1–99
      *
      * @throws InvalidPayloadException
      */
@@ -39,6 +44,10 @@ final readonly class PayBySquare implements Payload
     ) {
         if ($payments === []) {
             throw InvalidPayloadException::required(self::TYPE, 'payments');
+        }
+
+        if (count($payments) > self::MAX_PAYMENTS) {
+            throw InvalidPayloadException::outOfRange(self::TYPE, 'payments');
         }
 
         $this->invoiceId = Payment::text($invoiceId, 'invoiceId', 10);
