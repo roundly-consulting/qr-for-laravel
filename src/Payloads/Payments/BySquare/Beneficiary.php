@@ -32,7 +32,7 @@ final readonly class Beneficiary
 
     private static function field(?string $value, string $field): ?string
     {
-        $value = $value === null ? null : trim(TextNormalizer::clean($value));
+        $value = $value === null ? null : trim(TextNormalizer::field($value, PayBySquare::TYPE, $field));
 
         if ($value === null || $value === '') {
             return null;

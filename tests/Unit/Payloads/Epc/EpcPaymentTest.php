@@ -238,3 +238,17 @@ it('rejects a purpose code with a trailing newline instead of shifting the refer
     expect((new EpcPayment('Acme', 'DE89370400440532013000', purpose: 'GDDS', reference: 'RF18539007547034'))->toQrString())
         ->toEndWith("\nGDDS\nRF18539007547034");
 });
+
+it('rejects text that is not valid UTF-8 instead of emitting a payload it cannot parse', function (Closure $build, string $field): void {
+    try {
+        $build();
+        $this->fail('expected a failure');
+    } catch (InvalidPayloadException $e) {
+        expect($e->field)->toBe($field)->and($e->reason)->toBe(InvalidPayloadException::REASON_INVALID_FORMAT);
+    }
+})->with([
+    'name' => [fn () => new EpcPayment("J\xE1n", 'SK9611000000002918599669'), 'name'],
+    'text' => [fn () => new EpcPayment('Jan', 'SK9611000000002918599669', text: "Fakt\xFAra"), 'text'],
+    'information' => [fn () => new EpcPayment('Jan', 'SK9611000000002918599669', information: "\xFF"), 'information'],
+    'reference' => [fn () => new EpcPayment('Jan', 'SK9611000000002918599669', reference: "INV\xE1"), 'reference'],
+]);

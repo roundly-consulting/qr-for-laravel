@@ -388,3 +388,23 @@ it('decodes a blank beneficiary name written by older encoders as no beneficiary
 
     expect(BySquareSerializer::unserialize($serialized, BySquareVersion::V1_1_0)->payments[0]->beneficiary)->toBeNull();
 });
+
+it('rejects text that is not valid UTF-8 instead of emitting a code it cannot decode', function (Closure $build, string $field): void {
+    try {
+        $build();
+        $this->fail('expected a failure');
+    } catch (InvalidPayloadException $e) {
+        expect($e->field)->toBe($field)->and($e->reason)->toBe(InvalidPayloadException::REASON_INVALID_FORMAT);
+    }
+})->with([
+    'invoice id' => [fn () => new PayBySquare([bsqOrder()], "Fakt\xFAra"), 'invoiceId'],
+    'originator\'s reference' => [fn () => bsqOrder(extra: ['originatorsReference' => "R\xE1"]), 'originatorsReference'],
+    'note' => [fn () => bsqOrder(extra: ['note' => "Dar\xE1"]), 'note'],
+    'beneficiary name' => [fn () => new Beneficiary("J\xE1n"), 'beneficiary.name'],
+    'beneficiary street' => [fn () => new Beneficiary('Jan', "Hlavn\xE1"), 'beneficiary.street'],
+    'beneficiary city' => [fn () => new Beneficiary('Jan', null, "Ko\xE1ice"), 'beneficiary.city'],
+    'direct debit reference' => [fn () => new DirectDebitDetails(originatorsReference: "R\xE1"), 'directDebit.originatorsReference'],
+    'mandate id' => [fn () => new DirectDebitDetails(mandateId: "M\xE1"), 'directDebit.mandateId'],
+    'creditor id' => [fn () => new DirectDebitDetails(creditorId: "C\xE1"), 'directDebit.creditorId'],
+    'contract id' => [fn () => new DirectDebitDetails(contractId: "K\xE1"), 'directDebit.contractId'],
+]);

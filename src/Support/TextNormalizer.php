@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace RoundlyConsulting\Qr\Support;
 
 use Normalizer;
+use RoundlyConsulting\Qr\Exceptions\InvalidPayloadException;
 
 /**
  * Payment text hygiene: CR, LF and TAB (the EPC and by square field separators) collapse to
@@ -28,5 +29,20 @@ final class TextNormalizer
         }
 
         return $value;
+    }
+
+    /**
+     * Clean a payload's text field, refusing invalid UTF-8: it would pass the length checks
+     * and be written raw, and then the payment decoders reject the code.
+     *
+     * @throws InvalidPayloadException
+     */
+    public static function field(string $value, string $payloadType, string $field): string
+    {
+        if (! mb_check_encoding($value, 'UTF-8')) {
+            throw InvalidPayloadException::invalidFormat($payloadType, $field);
+        }
+
+        return self::clean($value);
     }
 }

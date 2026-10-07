@@ -270,7 +270,7 @@ final readonly class EpcPayment implements Payload
      */
     private static function text(?string $value, string $field, int $max, bool $required = false): ?string
     {
-        $value = $value === null ? null : trim(TextNormalizer::clean($value));
+        $value = $value === null ? null : trim(TextNormalizer::field($value, self::TYPE, $field));
 
         if ($value === null || $value === '') {
             return $required ? throw InvalidPayloadException::required(self::TYPE, $field) : null;
@@ -297,7 +297,7 @@ final readonly class EpcPayment implements Payload
             return [$reference, $reference->electronic()];
         }
 
-        $reference = $reference === null ? null : trim(TextNormalizer::clean($reference));
+        $reference = $reference === null ? null : trim(TextNormalizer::field($reference, self::TYPE, 'reference'));
 
         if ($reference === null || $reference === '') {
             return [null, null];

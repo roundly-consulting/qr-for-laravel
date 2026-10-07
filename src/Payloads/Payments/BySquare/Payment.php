@@ -171,7 +171,7 @@ final readonly class Payment
      */
     public static function text(?string $value, string $field, int $max): ?string
     {
-        $value = $value === null ? null : trim(TextNormalizer::clean($value));
+        $value = $value === null ? null : trim(TextNormalizer::field($value, PayBySquare::TYPE, $field));
 
         if ($value === null || $value === '') {
             return null;

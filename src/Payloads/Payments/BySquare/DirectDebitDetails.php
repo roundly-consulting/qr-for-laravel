@@ -39,7 +39,7 @@ final readonly class DirectDebitDetails
         $this->originatorsReference = Payment::text($originatorsReference, 'directDebit.originatorsReference', 35);
 
         foreach (['mandateId' => $mandateId, 'creditorId' => $creditorId, 'contractId' => $contractId] as $field => $value) {
-            if ($value !== null && mb_strlen(TextNormalizer::clean($value)) > 35) {
+            if ($value !== null && mb_strlen(TextNormalizer::field($value, PayBySquare::TYPE, 'directDebit.'.$field)) > 35) {
                 throw InvalidPayloadException::tooLong(PayBySquare::TYPE, 'directDebit.'.$field, 35);
             }
         }
