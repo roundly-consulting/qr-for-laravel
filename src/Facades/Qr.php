@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace RoundlyConsulting\Qr\Facades;
 
 use Illuminate\Support\Facades\Facade;
+use RoundlyConsulting\PackageToolkit\Concerns\RedactsSensitiveArguments;
 use RoundlyConsulting\Qr\Contracts\QrFactory;
 use RoundlyConsulting\Qr\QrManager;
 
@@ -34,6 +35,8 @@ use RoundlyConsulting\Qr\QrManager;
  */
 final class Qr extends Facade
 {
+    use RedactsSensitiveArguments;
+
     protected static function getFacadeAccessor(): string
     {
         return QrFactory::class;

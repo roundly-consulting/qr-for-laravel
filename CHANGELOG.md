@@ -6,6 +6,10 @@ All notable changes to `qr-for-laravel` are documented in this file. The format 
 
 ## Unreleased
 
+### Security
+
+- Flat facade calls (`Qr::wifi()`, `Qr::otpauth()`) no longer leave their `#[SensitiveParameter]` arguments (the Wi-Fi password, the otpauth URI) in the facade's stack frame, where error trackers that collect frame arguments could read them. Requires package-toolkit `^1.3`.
+
 ## 1.1.0 - 2026-10-07
 
 ### Changed

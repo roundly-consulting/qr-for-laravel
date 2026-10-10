@@ -40,6 +40,11 @@ it('documents its root', function (): void {
     expect(Qr::class)->toDocumentItsRoot();
 });
 
+// `wifi($password)` and `otpauth($uriOrPayload)`: the facade frame must not hold either secret.
+it('redacts sensitive arguments in its own frame', function (): void {
+    expect(Qr::class)->toRedactSensitiveArguments(methods: 2);
+});
+
 it('resolves the manager as a singleton behind the contract', function (): void {
     expect(app(QrFactory::class))->toBeInstanceOf(QrManager::class)
         ->and(app(QrManager::class))->toBe(app(QrFactory::class))
