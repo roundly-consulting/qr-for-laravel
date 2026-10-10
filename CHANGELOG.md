@@ -6,6 +6,12 @@ All notable changes to `qr-for-laravel` are documented in this file. The format 
 
 ## Unreleased
 
+## 1.1.1 - 2026-10-11
+
+### Changed
+
+- Maintenance: `roundly-consulting/package-toolkit-for-laravel` is now required at `^1.3` (was `^1.0`); the facade fix below builds on it, so `composer update` pulls it in.
+
 ### Security
 
 - Flat facade calls (`Qr::wifi()`, `Qr::otpauth()`) no longer leave their `#[SensitiveParameter]` arguments (the Wi-Fi password, the otpauth URI) in the facade's stack frame, where error trackers that collect frame arguments could read them. Requires package-toolkit `^1.3`.
