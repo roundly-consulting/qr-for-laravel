@@ -63,8 +63,14 @@ ArchPresets::noDebuggingLeftovers();
  *    empty scan by design.
  */
 
+/*
+ * Each vendor is named by its real PSR-4 root: Pest resolves a name only through an autoload
+ * root at or above it. A bare `Endroid`, `chillerlan` or `SimpleSoftwareIO` (packages rooted at
+ * `Endroid\QrCode\`, `chillerlan\QRCode\`, `SimpleSoftwareIO\QrCode\`) matched nothing even
+ * with the vendor installed — measured with a simulated install.
+ */
 arch('no third-party QR vendors are used')
-    ->expect(['BaconQrCode', 'Endroid', 'chillerlan', 'SimpleSoftwareIO', 'Zxing'])
+    ->expect(['BaconQrCode', 'Endroid\QrCode', 'chillerlan\QRCode', 'SimpleSoftwareIO\QrCode', 'Zxing'])
     ->not->toBeUsed();
 
 arch('exceptions extend the package base')
