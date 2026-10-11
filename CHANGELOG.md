@@ -6,6 +6,8 @@ All notable changes to `qr-for-laravel` are documented in this file. The format 
 
 ## Unreleased
 
+## 1.1.2 - 2026-10-11
+
 ### Changed
 
 - Maintenance: requires the latest roundly packages — crypto `^1.1.2`, enums `^1.1.0`,
