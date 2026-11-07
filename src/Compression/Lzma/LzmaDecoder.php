@@ -57,7 +57,7 @@ final class LzmaDecoder
                     $symbol = ($symbol << 1) | $decoder->bit($p, $offset + $symbol);
                 }
 
-                $output .= chr($symbol - 0x100);
+                $output .= chr(($symbol - 0x100) & 0xFF);
                 $produced++;
                 $state = LzmaModel::afterLiteral($state);
 

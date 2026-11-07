@@ -34,7 +34,7 @@ final readonly class LzmaProperties
      */
     public function header(?int $size = null): string
     {
-        return chr($this->byte()).pack('V', $this->dictionarySize)
+        return chr($this->byte() & 0xFF).pack('V', $this->dictionarySize)
             .($size === null ? str_repeat("\xFF", 8) : pack('P', $size));
     }
 }

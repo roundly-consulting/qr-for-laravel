@@ -294,7 +294,7 @@ final class MatrixDecoder
         $bytes = '';
 
         for ($i = 0; $i < $count; $i++) {
-            $bytes .= chr($read(8));
+            $bytes .= chr($read(8) & 0xFF);
         }
 
         return $bytes;

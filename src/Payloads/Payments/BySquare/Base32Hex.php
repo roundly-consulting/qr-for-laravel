@@ -56,7 +56,7 @@ final class Base32Hex
         $bytes = '';
 
         foreach (str_split(substr($bits, 0, intdiv(strlen($bits), 8) * 8), 8) as $byte) {
-            $bytes .= chr((int) bindec($byte));
+            $bytes .= chr((int) bindec($byte) & 0xFF);
         }
 
         return strlen($bits) < 8 ? '' : $bytes;

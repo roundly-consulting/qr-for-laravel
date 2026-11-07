@@ -45,6 +45,6 @@ final class ShiftJis
         $code = intdiv($value, 0xC0) << 8 | $value % 0xC0;
         $code += $code + 0x8140 <= 0x9FFC ? 0x8140 : 0xC140;
 
-        return mb_convert_encoding(chr($code >> 8).chr($code & 0xFF), 'UTF-8', 'SJIS');
+        return mb_convert_encoding(chr(($code >> 8) & 0xFF).chr($code & 0xFF), 'UTF-8', 'SJIS');
     }
 }
