@@ -25,7 +25,7 @@ Slovak PAY by square payments. No third-party runtime libraries.
 
 ## Installation
 
-Requires PHP 8.4 (`ext-mbstring`, `ext-bcmath`) and Laravel 12 or 13.
+Requires PHP 8.4 (`ext-mbstring`, `ext-bcmath`) and Laravel 13.
 
 ```bash
 composer require roundly-consulting/qr-for-laravel
