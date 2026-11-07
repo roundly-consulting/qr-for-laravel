@@ -156,6 +156,12 @@ final class RacingWriterStream
     }
 
     public function stream_close(): void {}
+
+    // PHP 8.6's file_put_contents() reports a write as failed when the wrapper cannot flush.
+    public function stream_flush(): bool
+    {
+        return true;
+    }
 }
 
 it('never overwrites a file created between the existence check and the write', function (): void {
